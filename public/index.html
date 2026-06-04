@@ -316,6 +316,7 @@
       .panel-l, .panel-r { display: none; }
     }
   </style>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -392,9 +393,13 @@
 
           <label class="section-title" for="custom-words">Custom Words</label>
           <textarea id="custom-words" placeholder="One word per line — e.g.&#10;Bangkok&#10;ramen&#10;Levi [Attack on Titan character]" rows="4" aria-describedby="custom-words-hint"></textarea>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
             <p class="hint" id="custom-words-hint">Added alongside chosen categories</p>
-            <button class="btn btn-secondary btn-sm" id="btn-save-words">Save</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-secondary btn-sm" id="btn-import-xlsx" title="Import from XLSX or CSV">📂 Import</button>
+              <input type="file" id="xlsx-file-input" accept=".xlsx,.xls,.csv" style="display:none;" aria-label="Import words from spreadsheet">
+              <button class="btn btn-secondary btn-sm" id="btn-save-words">Save</button>
+            </div>
           </div>
         </div>
       </div>
