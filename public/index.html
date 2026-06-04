@@ -639,7 +639,78 @@ function saveSettings() {
 
 document.getElementById('rnd-minus').addEventListener('click', () => { if(roundsCfg>1){roundsCfg--;updateRoundsDisplay();saveSettings();} });
 document.getElementById('rnd-plus').addEventListener('click',  () => { if(roundsCfg<10){roundsCfg++;updateRoundsDisplay();saveSettings();} });
+
+function parseWordFile(file) {
+  const reader = new FileReader();
+  const isCsv = file.name.toLowerCase().endsWith('.csv');
+
+  reader.onload = function(e) {
+    try {
+      let rows = [];
+
+      if (isCsv) {
+        // Hand-rolled CSV parser — handles quoted fields
+        const text = e.target.result;
+        rows = text.split(/\r?\n/).map(line => {
+          const cols = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') { inQ = !inQ; }
+            else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+            else { cur += ch; }
+          }
+          cols.push(cur.trim());
+          return cols;
+        });
+      } else {
+        // XLSX via SheetJS
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      }
+
+      // Header row detection — skip if col A looks like a label
+      const headerWords = ['word', 'name', 'character', 'term', 'item'];
+      if (rows.length && headerWords.includes(String(rows[0][0]).toLowerCase().trim())) {
+        rows = rows.slice(1);
+      }
+
+      const lines = rows
+        .map(r => ({ word: String(r[0] || '').trim(), ctx: String(r[1] || '').trim() }))
+        .filter(r => r.word)
+        .map(r => r.ctx ? `${r.word} [${r.ctx}]` : r.word);
+
+      if (!lines.length) { toast('No words found in file', 'e'); return; }
+
+      const ta = document.getElementById('custom-words');
+      const existing = ta.value.trim();
+      ta.value = existing ? existing + '\n' + lines.join('\n') : lines.join('\n');
+      saveSettings();
+      toast(`✅ Imported ${lines.length} word${lines.length !== 1 ? 's' : ''}`, 's');
+    } catch (err) {
+      console.error('[xlsx-import]', err);
+      toast('Failed to parse file — check format', 'e');
+    }
+  };
+
+  if (isCsv) {
+    reader.readAsText(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
 document.getElementById('btn-save-words').addEventListener('click', () => { saveSettings(); toast('Custom words saved!', 's'); });
+document.getElementById('btn-import-xlsx').addEventListener('click', () => {
+  if (!isHost) return;
+  document.getElementById('xlsx-file-input').click();
+});
+document.getElementById('xlsx-file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) { parseWordFile(file); e.target.value = ''; }
+});
 document.getElementById('btn-start').addEventListener('click', () => socket.emit('start-game'));
 document.getElementById('btn-leave').addEventListener('click', () => {
   if (confirm('Leave the room? You\'ll lose your spot.')) location.reload();
