@@ -394,7 +394,7 @@
           <label class="section-title" for="custom-words">Custom Words</label>
           <textarea id="custom-words" placeholder="One word per line — e.g.&#10;Bangkok&#10;ramen&#10;Levi [Attack on Titan character]" rows="4" aria-describedby="custom-words-hint"></textarea>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-            <p class="hint" id="custom-words-hint">Added alongside chosen categories</p>
+            <p class="hint" id="custom-words-hint">Added alongside chosen categories · Use Word [context] or import a spreadsheet</p>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-secondary btn-sm" id="btn-import-xlsx" title="Import from XLSX or CSV">📂 Import</button>
               <input type="file" id="xlsx-file-input" accept=".xlsx,.xls,.csv" style="display:none;" aria-label="Import words from spreadsheet">
@@ -617,6 +617,7 @@ function setSettingsEnabled(enabled) {
   const s = document.getElementById('lby-settings');
   s.style.opacity = enabled ? '1' : '0.45';
   s.style.pointerEvents = enabled ? 'auto' : 'none';
+  document.getElementById('btn-import-xlsx').style.display = enabled ? '' : 'none';
 }
 
 function updateStartBtn() {
