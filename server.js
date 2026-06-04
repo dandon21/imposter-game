@@ -492,12 +492,20 @@ io.on('connection', socket => {
     const room = getRoom(socket.roomCode);
     if (!room || room.state !== 'results' || !room.imposters.includes(socket.id) || room.guessUsed) return;
     room.guessUsed = true;
-    const correct = guess.trim().toLowerCase() === room.word.toLowerCase();
+    const correct = isFuzzyMatch(guess, room.word);
+    const exact = guess.trim().toLowerCase() === room.word.trim().toLowerCase();
     if (correct) {
       const p = room.players.find(p => p.id === socket.id);
       if (p) p.score += 150;
     }
-    io.to(room.code).emit('imposter-guessed', { correct, guess, word: room.word, guesser: socket.id, players: sanitizePlayers(room.players) });
+    io.to(room.code).emit('imposter-guessed', {
+      correct,
+      fuzzy: correct && !exact,
+      guess,
+      word: room.word,
+      guesser: socket.id,
+      players: sanitizePlayers(room.players)
+    });
 
     if (correct) {
       room.state = 'gameover';
