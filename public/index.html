@@ -990,6 +990,7 @@ socket.on('vote-update', ({ count, total }) => {
 // ══════════════════════════════════════════
 socket.on('results', ({ word, imposters, imposterNames, imposterCaught, voteCounts, votes, players: rp, round, totalRounds, isLastRound }) => {
   players = rp;
+  hasGuessed = false;
   const amIImposter = imposters.includes(myId);
   showView('results');
   renderResults({ word, imposters, imposterNames, imposterCaught, voteCounts, rp, round, totalRounds, isLastRound, amIImposter });
