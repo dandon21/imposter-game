@@ -479,7 +479,7 @@
 // ══════════════════════════════════════════
 const socket = io();
 let myId = null, myPlayer = null, myRoom = null;
-let isHost = false, myRole = null, myWord = null;
+let isHost = false, myRole = null, myWord = null, myHintWord = null;
 let players = [], clueOrder = [];
 let hasVoted = false, hasGuessed = false;
 let selectedCats = [], roundsCfg = 3;
@@ -681,6 +681,7 @@ socket.on('lobby-return', ({ room }) => {
 socket.on('game-start', ({ word, isImposter, hintWord, clueOrder: order, players: gPlayers, round, totalRounds }) => {
   myRole = isImposter ? 'imposter' : 'innocent';
   myWord = word;
+  myHintWord = hintWord || null;
   clueOrder = order;
   players = gPlayers;
   clueCount = 0;
@@ -761,7 +762,10 @@ function renderClueTurn(playerId, index, total) {
   if (isMe) {
     const wordBlock = myRole === 'innocent'
       ? `<div class="word-reminder"><div class="wr-label">The word is</div><div class="wr-val">${esc(myWord)}</div></div>`
-      : `<div class="word-reminder"><div class="wr-imp">🕵️ You're the imposter — you don't know the word!</div></div>`;
+      : `<div class="word-reminder">
+           <div class="wr-imp">🕵️ You're the imposter — you don't know the word!</div>
+           ${myHintWord ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)"><div class="wr-label" style="font-size:10px;opacity:.7;">Your hint</div><div class="wr-val" style="font-size:18px;color:var(--accent-bright);">${esc(myHintWord)}</div></div>` : ''}
+         </div>`;
 
     v.innerHTML = `
       <div class="my-turn-card">
@@ -798,7 +802,10 @@ function renderClueTurn(playerId, index, total) {
       <div class="waiting-icon">💭</div>
       ${myRole==='innocent'
         ? `<div class="word-reminder" style="max-width:320px;"><div class="wr-label">The word is</div><div class="wr-val">${esc(myWord)}</div></div>`
-        : `<div class="word-reminder" style="max-width:320px;"><div class="wr-imp">🕵️ Stay calm — blend in!</div></div>`
+        : `<div class="word-reminder" style="max-width:320px;">
+             <div class="wr-imp">🕵️ Stay calm — blend in!</div>
+             ${myHintWord ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)"><div class="wr-label" style="font-size:10px;opacity:.7;">Your hint</div><div class="wr-val" style="font-size:18px;color:var(--accent-bright);">${esc(myHintWord)}</div></div>` : ''}
+           </div>`
       }
     `;
   }
