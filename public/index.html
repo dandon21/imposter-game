@@ -1082,14 +1082,18 @@ function renderResults({ word, imposters, imposterNames, imposterCaught, voteCou
   }
 }
 
-socket.on('imposter-guessed', ({ correct, guess, word, guesser, players: up }) => {
+socket.on('imposter-guessed', ({ correct, fuzzy, guess, word, guesser, players: up }) => {
   players = up;
   const p = players.find(p=>p.id===guesser);
   const r = document.createElement('div');
   r.className = `guess-result ${correct?'ok':'no'}`;
-  r.textContent = correct
-    ? `✅ ${p?.name} guessed correctly: "${word}" — +150 pts!`
-    : `❌ ${p?.name} guessed wrong: "${guess}"`;
+  if (correct && fuzzy) {
+    r.innerHTML = `✅ ${p?.name} was close enough: "${guess}" → "${word}" — +150 pts!`;
+  } else if (correct) {
+    r.innerHTML = `✅ ${p?.name} guessed correctly: "${word}" — +150 pts!`;
+  } else {
+    r.innerHTML = `❌ ${p?.name} guessed wrong: "${guess}"`;
+  }
 
   const gb = document.getElementById('guess-box');
   if (gb) gb.replaceWith(r);
