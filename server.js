@@ -13,7 +13,7 @@ async function getHintWord(word) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content:
           `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
           `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
