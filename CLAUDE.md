@@ -1,190 +1,112 @@
-# CLAUDE.md — Imposter Game Project
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What This Is
-A real-time multiplayer social deduction game inspired by imposter-game.io and styled like skribbl.io.
-Built with Node.js + Express + Socket.io (backend) and vanilla HTML/CSS/JS (frontend).
+A real-time multiplayer social deduction game. Players get a secret word and give vague clues; one player (the imposter) doesn't know the word and must blend in. Built with Node.js + Express + Socket.io backend and a single-file vanilla HTML/CSS/JS frontend. Deployed on Railway at https://imposter-game-production-395b.up.railway.app — auto-deploys on every push to `main`.
 
-## Project Structure
-```
-imposter-game/
-├── CLAUDE.md          ← you are here
-├── package.json       ← dependencies: express ^4.18.2, socket.io ^4.7.2
-├── server.js          ← Express + Socket.io backend (~250 lines)
-└── public/
-    └── index.html     ← full frontend, all CSS + JS inline (~700 lines)
-```
-
-## First-Time Setup
+## Setup & Running
 ```bash
 npm install
-node server.js
+node server.js          # http://localhost:3000
 ```
-Server runs on http://localhost:3000 and prints a Network URL for other devices on the same WiFi.
-For internet play across networks: `npx ngrok http 3000`
+No build step. Changes to `public/index.html` or `server.js` are live on next server restart.
+
+## Live Debug Endpoint
+```bash
+curl "http://localhost:3000/api/hint-test?word=Gojo"
+curl "https://imposter-game-production-395b.up.railway.app/api/hint-test?word=elephant"
+# Returns: { word, hint, keySet, error }
+```
 
 ---
 
-## Game Rules
-- 3–10 players per room
-- Most players see a **secret word**; 1 imposter (2 if 7+ players) sees nothing
-- Players take turns giving one vague clue referencing the word
-- After all clues, everyone votes on who they think the imposter is
-- If the imposter is caught, innocents get +100 pts each
-- If the imposter escapes (no majority vote), imposter gets +200 pts
-- If caught, the imposter gets one chance to guess the word for +150 bonus pts
-- Host can set 1–10 rounds; scores accumulate across rounds
+## Architecture
 
----
+### File Structure
+```
+server.js              — Express + Socket.io backend (~500 lines)
+public/index.html      — entire frontend: CSS vars + all JS inline (~1100 lines)
+anime-words.csv        — 220 anime characters for bulk import
+docs/SESSION-LOG.md    — full history of everything built
+docs/superpowers/plans/ — implementation plans
+```
 
-## Backend: server.js
-
-### Word Lists
-7 categories hardcoded in `DEFAULT_WORDS`: Animals, Food, Places, Objects, Movies, Sports, Jobs (~12 words each)
-
-### Room State Object
+### Room State (server.js)
 ```js
 {
-  code,               // 4-char string e.g. "AB3K"
-  host,               // socket.id of host
+  code, host,
   players,            // [{ id, name, color, score, role }]
-  customWords,        // string[] from host textarea
-  selectedCategories, // string[] subset of DEFAULT_WORDS keys
   state,              // 'lobby' | 'playing' | 'voting' | 'results' | 'gameover'
-  word,               // current round's secret word
-  lastWord,           // avoid repeating
+  word,               // always stripped of [context] brackets
+  lastWord,
   imposters,          // socket.id[]
-  clues,              // [{ playerId, playerName, playerColor, clue }]
-  votes,              // { [voterId]: targetId }
-  clueOrder,          // socket.id[] shuffled each round
-  currentClueIndex,   // index into clueOrder
-  rounds,             // total rounds configured by host
-  currentRound,       // 1-based
-  guessUsed,          // bool — imposter only gets one guess per round
+  clues, votes, clueOrder, currentClueIndex,
+  rounds, currentRound, guessUsed,
+  customWords,        // plain word strings (brackets stripped on save)
+  customWordContexts, // { "levi": "Attack on Titan character" } — lowercase keys
 }
 ```
 
-### Socket Events (client → server)
-| Event | Payload | Description |
+### Word Categories & Contexts
+`DEFAULT_WORDS` has 8 categories: Animals, Food, Places, Objects, Movies, Sports, Jobs, **Anime** (220 characters across 35 series).
+
+`DEFAULT_WORD_CONTEXTS` is a flat map `{ lowercase_name → "Series character" }` for all 220 anime characters. When a word has a context (either from this map or `customWordContexts`), the Groq hint call is **skipped** — the series name IS the hint.
+
+### AI Hints (Groq API)
+- Env var: `GROQ_API_KEY` (set in Railway Variables)
+- Model: `llama-3.1-8b-instant`
+- Called in `startRound()` only when `wordContext` is null
+- Prompt targets ~5/10 similarity — bans synonyms, body parts, direct associations, other character names
+- `wordContext` (series name) passed to imposter alongside `hintWord` in `game-start`
+
+### Custom Words with Context
+Host types `Levi [Attack on Titan character]` in textarea — server parses bracket syntax, stores plain word + context separately. Brackets never appear in gameplay. Also supports XLSX/CSV bulk import via SheetJS CDN (Column A = word, Column B = context).
+
+### Key Socket Events
+
+**Client → Server:**
+| Event | Guard | Description |
 |---|---|---|
-| `create-room` | `{ name }` | Host creates room, callback returns `{ success, code, player, room }` |
-| `join-room` | `{ name, code }` | Join existing lobby, callback returns same shape |
-| `update-settings` | `{ customWords, selectedCategories, rounds }` | Host only, lobby only |
-| `start-game` | — | Host only; resets scores, calls startRound() |
-| `submit-clue` | `{ clue }` | Only accepted if it's your turn |
-| `vote` | `{ targetId }` | Once per player per round |
-| `imposter-guess` | `{ guess }` | Imposter only, results phase only, once per round |
-| `next-round` | — | Host only; increments round or triggers game-over |
-| `back-to-lobby` | — | Host only; resets scores + state |
-| `kick-player` | `{ targetId }` | Host only, lobby only |
+| `create-room` / `join-room` | — | Callback-based lobby entry |
+| `update-settings` | host + lobby | `{ customWords, selectedCategories, rounds }` |
+| `start-game` | host | Resets scores, calls `startRound()` |
+| `submit-clue` | your turn + playing | If imposter says the word → immediate win +200 pts |
+| `vote` | voting phase | Once per player |
+| `imposter-guess` | imposter + results + once | Word guess after being caught (+150 pts if correct) |
+| `next-round` | host + not gameover | Blocked when `room.state === 'gameover'` |
+| `back-to-lobby` / `kick-player` | host | Lobby management |
 
-### Socket Events (server → client)
-| Event | When |
+**Server → Client (notable):**
+| Event | Key Fields |
 |---|---|
-| `player-joined` | Someone joins lobby |
-| `player-left` | Someone disconnects or is kicked |
-| `settings-updated` | Host changes settings |
-| `room-update` | Catch-all lobby state sync |
-| `game-start` | Per-player event with their word (or null if imposter) |
-| `clue-turn` | `{ playerId, index, total }` — whose turn it is |
-| `clue-submitted` | `{ entry }` — broadcast to all |
-| `voting-start` | `{ players, clues }` — begin voting phase |
-| `vote-update` | `{ voterId, count, total }` — live vote count |
-| `results` | Full round outcome with scores |
-| `imposter-guessed` | `{ correct, guess, word, guesser, players }` |
-| `game-over` | `{ players }` sorted by score descending |
-| `lobby-return` | Host sent everyone back to lobby |
-| `kicked` | Sent only to the kicked player |
-| `error-msg` | String error toast |
+| `game-start` | `{ word, isImposter, hintWord, wordContext, clueOrder, round, totalRounds }` |
+| `imposter-self-revealed` | `{ imposterId, imposterName, word, players }` — mid-clue win |
+| `imposter-guessed` | `{ correct, guess, word, guesser, players }` — post-catch guess |
+| `game-over` | `{ players, imposters, imposterNames, word }` |
 
-### Key Server Functions
-- `startRound(room)` — picks word, assigns roles, shuffles clue order, emits `game-start` per player (different payload), then emits `clue-turn` after 5s delay
-- `resolveVoting(room)` — counts votes, finds most-voted, scores, emits `results`
-- `assignRoles(room)` — shuffles players, marks 1 (or 2 if 7+) as imposter
-- `pickWord(room)` — pools customWords + selectedCategories, avoids lastWord repeat
-- `sanitizePlayers(players, includeRole?)` — strips server-only fields before emitting
+### Frontend State (public/index.html)
+Key globals: `myId`, `myRole`, `myWord`, `myHintWord`, `myWordContext`, `isHost`, `players`, `selectedCats`, `hasVoted`, `hasGuessed`.
 
----
+Views inside `#screen-game` switched via `showView(id)`:
+`v-reveal` → `v-clue` → `v-vote` → `v-results` → `v-gameover`
 
-## Frontend: public/index.html
+### Scoring
+| Outcome | Points |
+|---|---|
+| Imposter escapes vote | +200 to imposter |
+| Innocents catch imposter | +100 to each innocent |
+| Imposter guesses word after being caught | +150 to imposter |
+| Imposter says word as clue mid-game | +200 to imposter, round ends immediately |
 
-Single file — all CSS variables, styles, and JS inline.
-
-### Design System
-```css
---bg: #09091a          /* page background */
---panel: #10101f       /* sidebar panels */
---card: #17172e        /* card backgrounds */
---border: #28284a
---accent: #7c5cbf      /* purple */
---accent-bright: #9d7de8
---text: #e4e4f4
---imposter: #ff6b6b    /* red */
---innocent: #4ecdc4    /* teal */
---success: #4ade80
---danger: #f87171
-```
-Fonts: **Fredoka One** (headings/logo) + **Nunito** (body) from Google Fonts
-
-### Screen Flow
-```
-#screen-landing  →  #screen-lobby  →  #screen-game
-                         ↑                  |
-                         └──── lobby-return ┘
-```
-
-### Game Views (inside #screen-game center panel)
-```
-#v-reveal    — word card or imposter card + clue order + 5s countdown
-#v-clue      — my-turn input OR waiting-for-X card + word reminder
-#v-vote      — clickable player grid for voting
-#v-results   — outcome, imposter reveal, word reveal, vote counts, scores, guess box
-#v-gameover  — final podium with medals
-```
-
-### Layout
-3-column grid:
-- Left (220px): `#game-players` — live player list with turn indicator and scores
-- Center (flex): game views, switches via `showView(id)`  
-- Right (252px): clue feed (chat-bubble style, animates in from right)
-
-### Key JS Functions
-- `showScreen(id)` / `showView(id)` — toggle visibility
-- `enterLobby(room)` — populates lobby UI, sets host permissions
-- `renderReveal(word, isImposter, order, players)` — injects word reveal HTML + countdown timer
-- `renderClueTurn(playerId, index, total)` — renders either my-turn input or waiting card
-- `renderResults(...)` — full results page including guess box for caught imposter
-- `addToFeed(entry)` — appends clue bubble to right panel feed
-- `renderGamePlayers(list, order, activeIdx)` — rebuilds left panel player list
-- `saveSettings()` — reads UI state and emits `update-settings`
-- `doVote(targetId)` — locks cards, emits `vote`
-
-### Auto-join from URL
-If the URL contains `?join=XXXX`, the code field is pre-filled on load.
+### Important Behaviours to Know
+- `room.word` is always stripped of `[context]` brackets (done in `startRound`)
+- Word banner on results screen shows `???` to the imposter until they submit their guess, then reveals real word via `#word-banner-reveal`
+- `next-round` handler is guarded against `room.state === 'gameover'` to prevent race condition when imposter correctly guesses during 3s delay
+- `game-over` payload always includes `imposters`, `imposterNames`, `word` so the final screen can show who was the imposter
 
 ---
 
-## What's NOT Yet Built (potential next steps)
-- [ ] Timer per clue (e.g. 30 seconds or pass)
-- [ ] Skip clue / pass button
-- [ ] Mobile layout (side panels hidden on <820px but no replacement UI)
-- [ ] Chat during results phase
-- [ ] Spectator mode
-- [ ] Persistent leaderboard
-- [ ] Room password / private rooms
-- [ ] Sound effects
-- [ ] Reconnection handling (if socket drops and reconnects mid-game)
-- [ ] Avatar selection instead of color dots
-- [ ] Deployment config (Railway, Render, Fly.io all work with `npm start`)
-
----
-
-## Deployment (when ready)
-The app is stateless (rooms live in memory), so any single-instance Node host works:
-
-```bash
-# Railway / Render / Fly.io — just point to this repo
-# Set env var PORT if needed (defaults to 3000)
-npm start
-```
-
-For multi-instance deployments you'd need Socket.io Redis adapter — not currently implemented.
+## Deployment
+Railway auto-deploys on `git push` to `main`. Required env var:
+- `GROQ_API_KEY` — Groq API key (free tier sufficient; `llama-3.1-8b-instant`)
