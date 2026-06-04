@@ -4,6 +4,32 @@ const { Server } = require('socket.io');
 const path = require('path');
 const os = require('os');
 
+// ── Fuzzy match helper (Levenshtein, ≥80% similarity = correct) ────────────
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function isFuzzyMatch(guess, word) {
+  const g = guess.trim().toLowerCase();
+  const w = word.trim().toLowerCase();
+  if (g === w) return true;
+  const maxLen = Math.max(g.length, w.length);
+  if (maxLen === 0) return true;
+  const similarity = 1 - levenshtein(g, w) / maxLen;
+  return similarity >= 0.80;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 // ===== HINT WORD =====
 async function getHintWord(word, context = null) {
   const key = process.env.GROQ_API_KEY;
