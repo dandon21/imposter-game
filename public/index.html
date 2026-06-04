@@ -1030,7 +1030,10 @@ function renderResults({ word, imposters, imposterNames, imposterCaught, voteCou
       <div class="ic-label">The Imposter${imposters.length>1?'s were':' was'}</div>
       <div class="ic-names">${imposterNames.map(esc).join(' &amp; ')}</div>
     </div>
-    <div class="word-banner"><div class="wb-lbl">The word was</div><div class="wb-word">${esc(word)}</div></div>
+    <div class="word-banner" id="word-banner-reveal">
+      <div class="wb-lbl">The word was</div>
+      <div class="wb-word">${(amIImposter && imposterCaught && !hasGuessed) ? '???' : esc(word)}</div>
+    </div>
     ${guessBlock}
     <div class="scores-section">
       <div class="scores-title">Vote Results</div>
@@ -1075,6 +1078,10 @@ socket.on('imposter-guessed', ({ correct, guess, word, guesser, players: up }) =
 
   const gb = document.getElementById('guess-box');
   if (gb) gb.replaceWith(r);
+
+  // Now reveal the word in the banner for everyone
+  const wb = document.getElementById('word-banner-reveal');
+  if (wb) wb.querySelector('.wb-word').textContent = word;
 
   if (correct) {
     const ptEl = document.getElementById('pts-' + guesser);
