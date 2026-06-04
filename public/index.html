@@ -903,6 +903,21 @@ function renderClueTurn(playerId, index, total) {
 // ══════════════════════════════════════════
 socket.on('clue-submitted', ({ entry }) => addToFeed(entry));
 
+socket.on('imposter-self-revealed', ({ imposterId, imposterName, word, players: up }) => {
+  players = up;
+  const isMe = imposterId === myId;
+  const msg = isMe
+    ? `🎉 You said the word "${word}" — you win this round! +200 pts`
+    : `🕵️ ${imposterName} said the word "${word}" — the imposter wins!`;
+  toast(msg, isMe ? 's' : 'e');
+
+  // Disable clue input if it's currently showing
+  const inp = document.getElementById('clue-inp');
+  const btn = document.getElementById('btn-send-clue');
+  if (inp) inp.disabled = true;
+  if (btn) btn.disabled = true;
+});
+
 function addToFeed(entry) {
   clueCount++;
   document.getElementById('clue-count').textContent = clueCount;
