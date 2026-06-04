@@ -306,6 +306,9 @@ io.on('connection', socket => {
       setTimeout(() => {
         io.to(room.code).emit('game-over', {
           players: [...room.players].sort((a, b) => b.score - a.score).map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score })),
+          imposters: room.imposters,
+          imposterNames: room.players.filter(p => room.imposters.includes(p.id)).map(p => p.name),
+          word: room.word,
         });
       }, 3000);
     }
@@ -313,11 +316,11 @@ io.on('connection', socket => {
 
   socket.on('next-round', () => {
     const room = getRoom(socket.roomCode);
-    if (!room || room.host !== socket.id) return;
+    if (!room || room.host !== socket.id || room.state === 'gameover') return;
     room.currentRound++;
     if (room.currentRound > room.rounds) {
       room.state = 'gameover';
-      io.to(room.code).emit('game-over', { players: [...room.players].sort((a, b) => b.score - a.score).map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score })) });
+      io.to(room.code).emit('game-over', { players: [...room.players].sort((a, b) => b.score - a.score).map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score })), imposters: room.imposters, imposterNames: room.players.filter(p => room.imposters.includes(p.id)).map(p => p.name), word: room.word });
     } else {
       startRound(room);
     }

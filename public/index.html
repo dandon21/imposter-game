@@ -447,6 +447,7 @@
         <!-- Game Over -->
         <div id="v-gameover" class="view" style="justify-content:center;">
           <div class="gameover-title">🏆 Game Over!</div>
+          <div id="gameover-reveal" style="width:100%;max-width:400px;margin-top:8px;"></div>
           <div id="final-scores" style="width:100%;max-width:400px;margin-top:8px;"></div>
           <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;">
             <button id="btn-play-again" class="btn btn-primary">🔄 Play Again</button>
@@ -1000,7 +1001,7 @@ socket.on('imposter-guessed', ({ correct, guess, word, guesser, players: up }) =
 // ══════════════════════════════════════════
 //  GAME OVER
 // ══════════════════════════════════════════
-socket.on('game-over', ({ players: fp }) => {
+socket.on('game-over', ({ players: fp, imposters: gi, imposterNames: gin, word: gw }) => {
   const medals = ['🥇','🥈','🥉'];
   document.getElementById('final-scores').innerHTML = fp.map((p,i)=>`
     <div class="score-row" style="${i===0?'border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.05);':''}">
@@ -1010,6 +1011,18 @@ socket.on('game-over', ({ players: fp }) => {
       <span class="score-pts">${p.score}</span>
     </div>
   `).join('');
+  const revealEl = document.getElementById('gameover-reveal');
+  if (revealEl && gin && gw) {
+    revealEl.innerHTML = `
+      <div class="imposters-card" style="margin-bottom:10px;">
+        <div class="ic-label">The Imposter${gin.length>1?'s were':' was'}</div>
+        <div class="ic-names">${gin.map(esc).join(' &amp; ')}</div>
+      </div>
+      <div class="word-banner" style="margin-bottom:20px;">
+        <div class="wb-lbl">The word was</div>
+        <div class="wb-word">${esc(gw)}</div>
+      </div>`;
+  }
   showView('gameover');
 });
 
