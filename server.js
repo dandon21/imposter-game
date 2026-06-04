@@ -401,6 +401,7 @@ io.on('connection', socket => {
     if (room.clueOrder[room.currentClueIndex] !== socket.id) return;
 
     const player = room.players.find(p => p.id === socket.id);
+    if (!player) return;
     const trimmed = clue.trim().slice(0, 60);
     const entry = { playerId: socket.id, playerName: player.name, playerColor: player.color, clue: trimmed };
     room.clues.push(entry);
@@ -410,7 +411,7 @@ io.on('connection', socket => {
 
     // Mid-clue win: imposter accidentally (or deliberately) says the secret word
     if (room.imposters.includes(socket.id) && trimmed.toLowerCase() === room.word.toLowerCase()) {
-      if (player) player.score += 200;
+      player.score += 200;
       room.state = 'gameover';
       io.to(room.code).emit('imposter-self-revealed', {
         imposterId: socket.id,
