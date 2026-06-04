@@ -138,6 +138,172 @@ const DEFAULT_WORDS = {
     'Light','L','Misa','Ryuk','Near','Mello',
     'Edward','Alphonse','Roy','Riza','Winry','Envy','Greed','Lust','Hohenheim','Scar',
     'Saitama','Genos','Tatsumaki','Fubuki','Garou','Bang','King','Boros','Sonic',
+    // Dragon Ball additions
+    'Whis','Jiren',
+    // Bleach additions
+    'Kenpachi',
+    // Haikyuu additions
+    'Nishinoya',
+    // Fire Force additions
+    'Obi',
+    // 86 additions
+    'Theoto',
+    // Attack on Titan
+    'Eren','Mikasa','Armin','Levi','Erwin',
+    // My Hero Academia
+    'Midoriya','Bakugo','Todoroki','All Might','Uraraka',
+    // Tokyo Ghoul
+    'Kaneki','Touka','Arima','Rize',
+    // Black Clover
+    'Asta','Yuno','Noelle','Yami',
+    // Fairy Tail
+    'Natsu','Lucy Heartfilia','Erza','Gray','Wendy',
+    // Code Geass
+    'Lelouch','C.C.','Suzaku','Kallen',
+    // Steins;Gate
+    'Okabe','Kurisu','Mayuri','Hashida',
+    // Kuroko\'s Basketball
+    'Kuroko','Kagami','Kise','Akashi',
+    // Slam Dunk
+    'Sakuragi','Rukawa','Akagi','Mitsui',
+    // Prince of Tennis
+    'Ryoma','Tezuka','Fuji','Atobe',
+    // Yuri on Ice
+    'Yuuri','Victor','Yurio',
+    // Sword Art Online
+    'Kirito','Asuna','Sinon','Klein','Leafa',
+    // Re:Zero
+    'Subaru','Emilia','Rem','Ram',
+    // Overlord
+    'Ainz','Albedo','Shalltear','Demiurge',
+    // No Game No Life
+    'Sora','Shiro','Stephanie',
+    // KonoSuba
+    'Kazuma','Megumin',
+    // That Time I Got Reincarnated as a Slime
+    'Rimuru','Shion','Milim',
+    // Mushoku Tensei
+    'Rudeus','Roxy','Eris','Sylphiette',
+    // The Rising of the Shield Hero
+    'Naofumi','Raphtalia','Filo','Malty',
+    // Log Horizon
+    'Shiroe','Naotsugu','Akatsuki',
+    // The Eminence in Shadow
+    'Cid','Alpha','Beta',
+    // Cowboy Bebop
+    'Spike','Jet','Faye','Edward Wong',
+    // Samurai Champloo
+    'Mugen','Jin','Fuu',
+    // Trigun
+    'Vash','Wolfwood','Knives',
+    // Neon Genesis Evangelion
+    'Shinji','Asuka','Rei','Misato','Kaworu',
+    // Gurren Lagann
+    'Simon','Kamina','Yoko','Nia',
+    // Parasyte
+    'Shinichi','Migi','Reiko',
+    // Erased
+    'Satoru','Kayo','Airi',
+    // The Promised Neverland
+    'Emma','Norman','Ray','Isabella',
+    // Made in Abyss
+    'Riko','Reg','Nanachi','Bondrewd',
+    // Dr. Stone
+    'Senku','Taiju',
+    // Soul Eater
+    'Maka','Soul','Death the Kid','Black Star',
+    // Blue Exorcist
+    'Yukio','Shiemi',
+    // Noragami
+    'Yato','Hiyori','Yukine',
+    // Bungo Stray Dogs
+    'Dazai','Atsushi','Akutagawa','Chuuya',
+    // The Apothecary Diaries
+    'Maomao','Jinshi','Gaoshun',
+    // Frieren
+    'Frieren','Fern','Stark','Himmel',
+    // Delicious in Dungeon
+    'Laios','Marcille','Senshi',
+    // Kaiju No. 8
+    'Kafka','Reno','Kikoru',
+    // Solo Leveling
+    'Jinwoo','Cha Hae-In','Beru',
+    // Wind Breaker
+    'Haruka','Kaji','Umemiya',
+    // Mashle
+    'Mash','Finn','Lance',
+    // Blue Box
+    'Taiki','Chinatsu','Hina',
+    // Toradora
+    'Ryuuji','Taiga','Minori','Kitamura',
+    // Your Lie in April
+    'Kousei','Kaori','Tsubaki','Watari',
+    // Clannad
+    'Tomoya','Nagisa Furukawa','Kyou','Tomoyo','Ushio','Akio',
+    // Kaguya-sama
+    'Kaguya','Shirogane','Chika','Ishigami',
+    // Rascal Does Not Dream of Bunny Girl Senpai
+    'Sakuta','Mai','Tomoe','Rio',
+    // My Dress-Up Darling
+    'Wakana','Marin','Sajuna','Shinju',
+    // Komi Can\'t Communicate
+    'Komi','Tadano','Najimi','Yamai',
+    // Spirited Away
+    'Chihiro','Haku','Yubaba','No-Face',
+    // Princess Mononoke
+    'Ashitaka','San','Lady Eboshi','Jigo',
+    // Howl\'s Moving Castle
+    'Howl','Sophie','Calcifer','Witch of the Waste',
+    // My Neighbor Totoro
+    'Satsuki','Mei','Totoro',
+    // Kiki\'s Delivery Service
+    'Kiki','Jiji','Tombo',
+    // Akira
+    'Kaneda','Tetsuo','Shikishima',
+    // A Silent Voice
+    'Shoya','Shoko','Ueno','Nagatsuka',
+    // Your Name
+    'Taki','Mitsuha','Teshigawara','Sayaka',
+    // Weathering with You
+    'Hodaka','Hina Amano',
+    // Suzume
+    'Suzume','Souta','Daijin',
+    // Monster
+    'Tenma','Johan','Nina','Lunge',
+    // Hajime no Ippo
+    'Ippo','Takamura','Miyata',
+    // Initial D
+    'Takumi','Keisuke','Ryousuke','Itsuki',
+    // Food Wars
+    'Soma','Erina','Megumi Tadokoro','Takumi Aldini',
+    // Gintama
+    'Gintoki','Shinpachi','Kagura','Katsura',
+    // The Seven Deadly Sins
+    'Meliodas','Elizabeth','Ban','Diane',
+    // Black Lagoon
+    'Revy','Rock','Dutch','Benny',
+    // Violet Evergarden
+    'Violet','Gilbert','Hodgins','Cattleya',
+    // Inuyasha
+    'Inuyasha','Kagome','Sesshomaru','Miroku','Sango',
+    // Rurouni Kenshin
+    'Kenshin','Sanosuke','Aoshi',
+    // Yu Yu Hakusho
+    'Yusuke','Kurama','Hiei','Kuwabara',
+    // Berserk
+    'Guts','Griffith','Casca','Skull Knight','Judeau',
+    // The God of High School
+    'Jin Mori','Daewi','Yoo Mira',
+    // The Irregular at Magic High School
+    'Tatsuya','Miyuki Shiba','Erika','Leo',
+    // A Certain Magical Index
+    'Touma','Index','Accelerator','Misaka',
+    // Fate
+    'Kiritsugu','Saber','Kirei','Iskandar','Shirou','Archer','Jeanne','Sieg','Astolfo','Karna','Ritsuka','Mash Kyrielight','Romani','Solomon',
+    // Ranking of Kings
+    'Bojji','Kage','Daida','Hiling',
+    // Vinland Saga
+    'Thorfinn','Askeladd','Canute','Thors',
   ],
 };
 
@@ -240,6 +406,229 @@ const DEFAULT_WORD_CONTEXTS = {
   tatsumaki:'One Punch Man character', fubuki:'One Punch Man character',
   garou:'One Punch Man character', bang:'One Punch Man character',
   king:'One Punch Man character', boros:'One Punch Man character', sonic:'One Punch Man character',
+  // Dragon Ball additions
+  whis:'Dragon Ball character', jiren:'Dragon Ball character',
+  // Bleach additions
+  kenpachi:'Bleach character',
+  // Haikyuu additions
+  nishinoya:'Haikyuu character',
+  // Fire Force additions
+  obi:'Fire Force character',
+  // 86 additions
+  theoto:'86 character',
+  // Attack on Titan
+  eren:'Attack on Titan character', mikasa:'Attack on Titan character',
+  armin:'Attack on Titan character', levi:'Attack on Titan character', erwin:'Attack on Titan character',
+  // My Hero Academia
+  midoriya:'My Hero Academia character', bakugo:'My Hero Academia character',
+  todoroki:'My Hero Academia character', 'all might':'My Hero Academia character', uraraka:'My Hero Academia character',
+  // Tokyo Ghoul
+  kaneki:'Tokyo Ghoul character', touka:'Tokyo Ghoul character',
+  arima:'Tokyo Ghoul character', rize:'Tokyo Ghoul character',
+  // Black Clover
+  asta:'Black Clover character', yuno:'Black Clover character',
+  noelle:'Black Clover character', yami:'Black Clover character',
+  // Fairy Tail
+  natsu:'Fairy Tail character', 'lucy heartfilia':'Fairy Tail character',
+  erza:'Fairy Tail character', gray:'Fairy Tail character', wendy:'Fairy Tail character',
+  // Code Geass
+  lelouch:'Code Geass character', 'c.c.':'Code Geass character',
+  suzaku:'Code Geass character', kallen:'Code Geass character',
+  // Steins;Gate
+  okabe:'Steins;Gate character', kurisu:'Steins;Gate character',
+  mayuri:'Steins;Gate character', hashida:'Steins;Gate character',
+  // Kuroko's Basketball
+  kuroko:"Kuroko's Basketball character", kagami:"Kuroko's Basketball character",
+  kise:"Kuroko's Basketball character", akashi:"Kuroko's Basketball character",
+  // Slam Dunk
+  sakuragi:'Slam Dunk character', rukawa:'Slam Dunk character',
+  akagi:'Slam Dunk character', mitsui:'Slam Dunk character',
+  // Prince of Tennis
+  ryoma:'Prince of Tennis character', tezuka:'Prince of Tennis character',
+  fuji:'Prince of Tennis character', atobe:'Prince of Tennis character',
+  // Yuri on Ice
+  yuuri:'Yuri on Ice character', victor:'Yuri on Ice character', yurio:'Yuri on Ice character',
+  // Sword Art Online
+  kirito:'Sword Art Online character', asuna:'Sword Art Online character',
+  sinon:'Sword Art Online character', klein:'Sword Art Online character', leafa:'Sword Art Online character',
+  // Re:Zero
+  subaru:'Re:Zero character', emilia:'Re:Zero character',
+  rem:'Re:Zero character', ram:'Re:Zero character',
+  // Overlord
+  ainz:'Overlord character', albedo:'Overlord character',
+  shalltear:'Overlord character', demiurge:'Overlord character',
+  // No Game No Life
+  sora:'No Game No Life character', shiro:'No Game No Life character', stephanie:'No Game No Life character',
+  // KonoSuba
+  kazuma:'KonoSuba character', megumin:'KonoSuba character',
+  // That Time I Got Reincarnated as a Slime
+  rimuru:'That Time I Got Reincarnated as a Slime character',
+  shion:'That Time I Got Reincarnated as a Slime character',
+  milim:'That Time I Got Reincarnated as a Slime character',
+  // Mushoku Tensei
+  rudeus:'Mushoku Tensei character', roxy:'Mushoku Tensei character',
+  eris:'Mushoku Tensei character', sylphiette:'Mushoku Tensei character',
+  // The Rising of the Shield Hero
+  naofumi:'The Rising of the Shield Hero character', raphtalia:'The Rising of the Shield Hero character',
+  filo:'The Rising of the Shield Hero character', malty:'The Rising of the Shield Hero character',
+  // Log Horizon
+  shiroe:'Log Horizon character', naotsugu:'Log Horizon character', akatsuki:'Log Horizon character',
+  // The Eminence in Shadow
+  cid:'The Eminence in Shadow character', alpha:'The Eminence in Shadow character', beta:'The Eminence in Shadow character',
+  // Cowboy Bebop
+  spike:'Cowboy Bebop character', jet:'Cowboy Bebop character',
+  faye:'Cowboy Bebop character', 'edward wong':'Cowboy Bebop character',
+  // Samurai Champloo
+  mugen:'Samurai Champloo character', jin:'Samurai Champloo character', fuu:'Samurai Champloo character',
+  // Trigun
+  vash:'Trigun character', wolfwood:'Trigun character', knives:'Trigun character',
+  // Neon Genesis Evangelion
+  shinji:'Neon Genesis Evangelion character', asuka:'Neon Genesis Evangelion character',
+  rei:'Neon Genesis Evangelion character', misato:'Neon Genesis Evangelion character', kaworu:'Neon Genesis Evangelion character',
+  // Gurren Lagann
+  simon:'Gurren Lagann character', kamina:'Gurren Lagann character',
+  yoko:'Gurren Lagann character', nia:'Gurren Lagann character',
+  // Parasyte
+  shinichi:'Parasyte character', migi:'Parasyte character', reiko:'Parasyte character',
+  // Erased
+  satoru:'Erased character', kayo:'Erased character', airi:'Erased character',
+  // The Promised Neverland
+  emma:'The Promised Neverland character', norman:'The Promised Neverland character',
+  ray:'The Promised Neverland character', isabella:'The Promised Neverland character',
+  // Made in Abyss
+  riko:'Made in Abyss character', reg:'Made in Abyss character',
+  nanachi:'Made in Abyss character', bondrewd:'Made in Abyss character',
+  // Dr. Stone
+  senku:'Dr. Stone character', taiju:'Dr. Stone character',
+  // Soul Eater
+  maka:'Soul Eater character', soul:'Soul Eater character',
+  'death the kid':'Soul Eater character', 'black star':'Soul Eater character',
+  // Blue Exorcist
+  yukio:'Blue Exorcist character', shiemi:'Blue Exorcist character',
+  // Noragami
+  yato:'Noragami character', hiyori:'Noragami character', yukine:'Noragami character',
+  // Bungo Stray Dogs
+  dazai:'Bungo Stray Dogs character', atsushi:'Bungo Stray Dogs character',
+  akutagawa:'Bungo Stray Dogs character', chuuya:'Bungo Stray Dogs character',
+  // The Apothecary Diaries
+  maomao:'The Apothecary Diaries character', jinshi:'The Apothecary Diaries character', gaoshun:'The Apothecary Diaries character',
+  // Frieren
+  frieren:'Frieren character', fern:'Frieren character',
+  stark:'Frieren character', himmel:'Frieren character',
+  // Delicious in Dungeon
+  laios:'Delicious in Dungeon character', marcille:'Delicious in Dungeon character', senshi:'Delicious in Dungeon character',
+  // Kaiju No. 8
+  kafka:'Kaiju No. 8 character', reno:'Kaiju No. 8 character', kikoru:'Kaiju No. 8 character',
+  // Solo Leveling
+  jinwoo:'Solo Leveling character', 'cha hae-in':'Solo Leveling character', beru:'Solo Leveling character',
+  // Wind Breaker
+  haruka:'Wind Breaker character', kaji:'Wind Breaker character', umemiya:'Wind Breaker character',
+  // Mashle
+  mash:'Mashle character', finn:'Mashle character', lance:'Mashle character',
+  // Blue Box
+  taiki:'Blue Box character', chinatsu:'Blue Box character', hina:'Blue Box character',
+  // Toradora
+  ryuuji:'Toradora character', taiga:'Toradora character',
+  minori:'Toradora character', kitamura:'Toradora character',
+  // Your Lie in April
+  kousei:'Your Lie in April character', kaori:'Your Lie in April character',
+  tsubaki:'Your Lie in April character', watari:'Your Lie in April character',
+  // Clannad
+  tomoya:'Clannad character', 'nagisa furukawa':'Clannad character',
+  kyou:'Clannad character', tomoyo:'Clannad character', ushio:'Clannad character', akio:'Clannad character',
+  // Kaguya-sama
+  kaguya:'Kaguya-sama character', shirogane:'Kaguya-sama character',
+  chika:'Kaguya-sama character', ishigami:'Kaguya-sama character',
+  // Rascal Does Not Dream of Bunny Girl Senpai
+  sakuta:'Rascal Does Not Dream of Bunny Girl Senpai character',
+  mai:'Rascal Does Not Dream of Bunny Girl Senpai character',
+  tomoe:'Rascal Does Not Dream of Bunny Girl Senpai character',
+  rio:'Rascal Does Not Dream of Bunny Girl Senpai character',
+  // My Dress-Up Darling
+  wakana:'My Dress-Up Darling character', marin:'My Dress-Up Darling character',
+  sajuna:'My Dress-Up Darling character', shinju:'My Dress-Up Darling character',
+  // Komi Can't Communicate
+  komi:"Komi Can't Communicate character", tadano:"Komi Can't Communicate character",
+  najimi:"Komi Can't Communicate character", yamai:"Komi Can't Communicate character",
+  // Spirited Away
+  chihiro:'Spirited Away character', haku:'Spirited Away character',
+  yubaba:'Spirited Away character', 'no-face':'Spirited Away character',
+  // Princess Mononoke
+  ashitaka:'Princess Mononoke character', san:'Princess Mononoke character',
+  'lady eboshi':'Princess Mononoke character', jigo:'Princess Mononoke character',
+  // Howl's Moving Castle
+  howl:"Howl's Moving Castle character", sophie:"Howl's Moving Castle character",
+  calcifer:"Howl's Moving Castle character", 'witch of the waste':"Howl's Moving Castle character",
+  // My Neighbor Totoro
+  satsuki:'My Neighbor Totoro character', mei:'My Neighbor Totoro character', totoro:'My Neighbor Totoro character',
+  // Kiki's Delivery Service
+  kiki:"Kiki's Delivery Service character", jiji:"Kiki's Delivery Service character", tombo:"Kiki's Delivery Service character",
+  // Akira
+  kaneda:'Akira character', tetsuo:'Akira character', shikishima:'Akira character',
+  // A Silent Voice
+  shoya:'A Silent Voice character', shoko:'A Silent Voice character',
+  ueno:'A Silent Voice character', nagatsuka:'A Silent Voice character',
+  // Your Name
+  taki:'Your Name character', mitsuha:'Your Name character',
+  teshigawara:'Your Name character', sayaka:'Your Name character',
+  // Weathering with You
+  hodaka:'Weathering with You character', 'hina amano':'Weathering with You character',
+  // Suzume
+  suzume:'Suzume character', souta:'Suzume character', daijin:'Suzume character',
+  // Monster
+  tenma:'Monster character', johan:'Monster character',
+  nina:'Monster character', lunge:'Monster character',
+  // Hajime no Ippo
+  ippo:'Hajime no Ippo character', takamura:'Hajime no Ippo character', miyata:'Hajime no Ippo character',
+  // Initial D
+  takumi:'Initial D character', keisuke:'Initial D character',
+  ryousuke:'Initial D character', itsuki:'Initial D character',
+  // Food Wars
+  soma:'Food Wars character', erina:'Food Wars character',
+  'megumi tadokoro':'Food Wars character', 'takumi aldini':'Food Wars character',
+  // Gintama
+  gintoki:'Gintama character', shinpachi:'Gintama character',
+  kagura:'Gintama character', katsura:'Gintama character',
+  // The Seven Deadly Sins
+  meliodas:'The Seven Deadly Sins character', elizabeth:'The Seven Deadly Sins character',
+  ban:'The Seven Deadly Sins character', diane:'The Seven Deadly Sins character',
+  // Black Lagoon
+  revy:'Black Lagoon character', rock:'Black Lagoon character',
+  dutch:'Black Lagoon character', benny:'Black Lagoon character',
+  // Violet Evergarden
+  violet:'Violet Evergarden character', gilbert:'Violet Evergarden character',
+  hodgins:'Violet Evergarden character', cattleya:'Violet Evergarden character',
+  // Inuyasha
+  inuyasha:'Inuyasha character', kagome:'Inuyasha character', sesshomaru:'Inuyasha character',
+  miroku:'Inuyasha character', sango:'Inuyasha character',
+  // Rurouni Kenshin
+  kenshin:'Rurouni Kenshin character', sanosuke:'Rurouni Kenshin character', aoshi:'Rurouni Kenshin character',
+  // Yu Yu Hakusho
+  yusuke:'Yu Yu Hakusho character', kurama:'Yu Yu Hakusho character',
+  hiei:'Yu Yu Hakusho character', kuwabara:'Yu Yu Hakusho character',
+  // Berserk
+  guts:'Berserk character', griffith:'Berserk character', casca:'Berserk character',
+  'skull knight':'Berserk character', judeau:'Berserk character',
+  // The God of High School
+  'jin mori':'The God of High School character', daewi:'The God of High School character', 'yoo mira':'The God of High School character',
+  // The Irregular at Magic High School
+  tatsuya:'The Irregular at Magic High School character', 'miyuki shiba':'The Irregular at Magic High School character',
+  erika:'The Irregular at Magic High School character', leo:'The Irregular at Magic High School character',
+  // A Certain Magical Index
+  touma:'A Certain Magical Index character', index:'A Certain Magical Index character',
+  accelerator:'A Certain Magical Index character', misaka:'A Certain Magical Index character',
+  // Fate
+  kiritsugu:'Fate character', saber:'Fate character', kirei:'Fate character',
+  iskandar:'Fate character', shirou:'Fate character', archer:'Fate character',
+  jeanne:'Fate character', sieg:'Fate character', astolfo:'Fate character',
+  karna:'Fate character', ritsuka:'Fate character', 'mash kyrielight':'Fate character',
+  romani:'Fate character', solomon:'Fate character',
+  // Ranking of Kings
+  bojji:'Ranking of Kings character', kage:'Ranking of Kings character',
+  daida:'Ranking of Kings character', hiling:'Ranking of Kings character',
+  // Vinland Saga
+  thorfinn:'Vinland Saga character', askeladd:'Vinland Saga character',
+  canute:'Vinland Saga character', thors:'Vinland Saga character',
 };
 
 const COLORS = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE','#52BE80'];
