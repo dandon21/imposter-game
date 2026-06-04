@@ -50,7 +50,7 @@ app.get('/api/hint-test', async (req, res) => {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'llama3-8b-8192', messages: [{ role: 'user', content: `Say one word related to "${word}". Reply with ONLY that word.` }], max_tokens: 20 }),
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: `Say one word related to "${word}". Reply with ONLY that word.` }], max_tokens: 20 }),
     });
     const body = await r.text();
     if (r.ok) hint = JSON.parse(body)?.choices?.[0]?.message?.content?.trim() || null;
