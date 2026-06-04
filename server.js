@@ -57,8 +57,32 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/hint-test', async (req, res) => {
   const word = req.query.word || 'pizza';
-  const hint = await getHintWord(word);
-  res.json({ word, hint, keySet: !!process.env.GEMINI_API_KEY });
+  const key = process.env.GEMINI_API_KEY;
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+  const results = [];
+
+  for (const model of models) {
+    try {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: `Say one word related to "${word}". Reply with ONLY that word.` }] }],
+            generationConfig: { maxOutputTokens: 20, temperature: 0.7 } }) }
+      );
+      const body = await r.text();
+      if (r.ok) {
+        const hint = JSON.parse(body)?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        results.push({ model, status: r.status, hint: hint || null });
+        if (hint) break;
+      } else {
+        results.push({ model, status: r.status, error: body.slice(0, 300) });
+      }
+    } catch (err) {
+      results.push({ model, error: err.message });
+    }
+  }
+
+  res.json({ word, keySet: !!key, results });
 });
 
 // ===== WORD LISTS =====
