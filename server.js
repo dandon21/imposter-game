@@ -7,30 +7,46 @@ const os = require('os');
 // ===== GEMINI HINT =====
 async function getHintWord(word) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text:
-            `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
-            `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
-            `The hint should help them give believable clues without giving the word away. ` +
-            `Reply with ONLY the hint word or phrase, nothing else, no punctuation.`
-          }] }],
-          generationConfig: { maxOutputTokens: 20, temperature: 0.7 },
-        }),
+  if (!key) { console.warn('[hint] GEMINI_API_KEY not set — skipping hint'); return null; }
+
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text:
+              `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
+              `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
+              `The hint should help them give believable clues without giving the word away. ` +
+              `Reply with ONLY the hint word or phrase, nothing else, no punctuation.`
+            }] }],
+            generationConfig: { maxOutputTokens: 20, temperature: 0.7 },
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.warn(`[hint] model ${model} returned ${res.status}: ${errText.slice(0, 200)}`);
+        continue;
       }
-    );
-    const data = await res.json();
-    const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return hint || null;
-  } catch {
-    return null;
+
+      const data = await res.json();
+      const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (hint) { console.log(`[hint] "${word}" → "${hint}" (model: ${model})`); return hint; }
+      console.warn(`[hint] model ${model} returned empty hint for "${word}"`);
+    } catch (err) {
+      console.error(`[hint] fetch error for model ${model}:`, err.message);
+    }
   }
+
+  console.warn(`[hint] all models failed for "${word}" — no hint this round`);
+  return null;
 }
 
 const app = express();
@@ -38,6 +54,12 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/hint-test', async (req, res) => {
+  const word = req.query.word || 'pizza';
+  const hint = await getHintWord(word);
+  res.json({ word, hint, keySet: !!process.env.GEMINI_API_KEY });
+});
 
 // ===== WORD LISTS =====
 const DEFAULT_WORDS = {
