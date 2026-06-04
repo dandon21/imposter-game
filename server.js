@@ -112,7 +112,7 @@ function assignRoles(room) {
 
 async function startRound(room) {
   room.state = 'playing';
-  room.word = pickWord(room);
+  room.word = pickWord(room).replace(/\s*\[.*?\]\s*$/, '').trim();
   room.lastWord = room.word;
   room.clues = [];
   room.votes = {};
