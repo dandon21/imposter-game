@@ -952,6 +952,7 @@ socket.on('imposter-guessed', ({ correct, guess, word, guesser, players: up }) =
     const ptEl = document.getElementById('pts-' + guesser);
     const pData = players.find(p=>p.id===guesser);
     if (ptEl && pData) ptEl.textContent = pData.score;
+    toast('🏆 Imposter guessed it — game over!', 's');
   }
 });
 

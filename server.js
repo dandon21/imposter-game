@@ -232,6 +232,15 @@ io.on('connection', socket => {
       if (p) p.score += 150;
     }
     io.to(room.code).emit('imposter-guessed', { correct, guess, word: room.word, guesser: socket.id, players: sanitizePlayers(room.players) });
+
+    if (correct) {
+      room.state = 'gameover';
+      setTimeout(() => {
+        io.to(room.code).emit('game-over', {
+          players: [...room.players].sort((a, b) => b.score - a.score).map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score })),
+        });
+      }, 3000);
+    }
   });
 
   socket.on('next-round', () => {
