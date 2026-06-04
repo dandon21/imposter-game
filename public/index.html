@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imposter Game 🕵️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09091a;
+      --panel: #10101f;
+      --card: #17172e;
+      --card-hover: #1e1e3a;
+      --border: #28284a;
+      --border-bright: #3a3a6a;
+      --accent: #7c5cbf;
+      --accent-bright: #9d7de8;
+      --accent-dim: rgba(124,92,191,0.13);
+      --accent-glow: rgba(124,92,191,0.35);
+      --text: #e4e4f4;
+      --text-muted: #6a6a9e;
+      --text-faint: #32324e;
+      --success: #4ade80;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --imposter: #ff6b6b;
+      --innocent: #4ecdc4;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; overflow: hidden; }
+    #app { height: 100vh; width: 100vw; position: relative; overflow: hidden; }
+
+    /* ── SCREENS ── */
+    .screen { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
+    .screen.active { display: flex; }
+
+    /* ── LANDING ── */
+    #screen-landing { align-items: center; justify-content: center; overflow-y: auto;
+      background: radial-gradient(ellipse at 20% 60%, rgba(124,92,191,0.1) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(78,205,196,0.07) 0%, transparent 45%), var(--bg); }
+
+    .landing-wrap { width: 100%; max-width: 460px; padding: 40px 20px 60px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+
+    .logo { font-family: 'Fredoka One', cursive; font-size: 56px; text-align: center; line-height: 1;
+      background: linear-gradient(135deg, #9d7de8 0%, #4ecdc4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 40px rgba(124,92,191,0.5)); }
+    .logo-emoji { -webkit-text-fill-color: initial; filter: none; }
+    .tagline { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-top: -10px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; width: 100%; display: flex; flex-direction: column; gap: 18px; }
+
+    .field-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 6px; }
+
+    input[type="text"], textarea {
+      width: 100%; background: var(--panel); border: 2px solid var(--border); border-radius: 12px;
+      color: var(--text); font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
+      padding: 13px 16px; outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+    .divider { display: flex; align-items: center; gap: 12px; color: var(--text-faint); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .join-row { display: flex; gap: 10px; }
+    .join-row input { text-transform: uppercase; letter-spacing: .2em; font-size: 22px; text-align: center; font-family: 'Fredoka One', cursive; }
+
+    .err { font-size: 13px; font-weight: 700; color: var(--danger); text-align: center; min-height: 18px; }
+
+    /* ── BUTTONS ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: 12px; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; padding: 13px 22px; transition: all .15s; white-space: nowrap; touch-action: manipulation; }
+    .btn:disabled { opacity: .38; cursor: not-allowed; }
+    .btn:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 2px; }
+    .btn-primary { background: linear-gradient(135deg, #7c5cbf, #5840a0); color: #fff; box-shadow: 0 4px 18px rgba(124,92,191,.35); }
+    .btn-primary:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(124,92,191,.5); }
+    .btn-secondary { background: var(--card); color: var(--text); border: 2px solid var(--border); }
+    .btn-secondary:not(:disabled):hover { background: var(--card-hover); border-color: var(--border-bright); transform: translateY(-1px); }
+    .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 9px; }
+    .btn-lg { padding: 16px 32px; font-size: 17px; border-radius: 14px; }
+    .btn-full { width: 100%; }
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 17px; padding: 6px 8px; border-radius: 8px; transition: background .15s; color: var(--text-muted); touch-action: manipulation; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-icon:hover { background: var(--card-hover); color: var(--text); }
+    .btn-icon:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 2px; }
+
+    /* ── TOAST ── */
+    #toasts { position: fixed; top: 18px; right: 18px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px 18px; font-size: 14px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.5); max-width: 280px; animation: tIn .3s ease; }
+    .toast.out { animation: tOut .3s ease forwards; }
+    .toast.s { border-left: 3px solid var(--success); }
+    .toast.e { border-left: 3px solid var(--danger); }
+    @keyframes tIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes tOut { from { opacity: 1; } to { opacity: 0; transform: translateX(16px); } }
+
+    /* ── LOBBY ── */
+    #screen-lobby { overflow-y: auto; }
+    .lobby-wrap { max-width: 880px; margin: 0 auto; padding: 24px 20px 50px; display: flex; flex-direction: column; gap: 22px; }
+
+    .lobby-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .code-pill { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px 20px; }
+    .code-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+    .code-val { font-family: 'Fredoka One', cursive; font-size: 30px; letter-spacing: .18em; color: var(--accent-bright); }
+
+    .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 620px) { .lobby-grid { grid-template-columns: 1fr; } }
+
+    .section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+
+    .p-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--panel); border-radius: 10px; }
+    .p-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; color: #000; flex-shrink: 0; }
+    .p-name { font-weight: 700; font-size: 15px; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .badge-host { background: rgba(124,92,191,.2); color: var(--accent-bright); border: 1px solid rgba(124,92,191,.3); }
+    .badge-you  { background: rgba(78,205,196,.15); color: #4ecdc4; border: 1px solid rgba(78,205,196,.25); }
+
+    .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .cat-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .15s; font-size: 13px; font-weight: 700; user-select: none; touch-action: manipulation; min-height: 44px; }
+    .cat-chip:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 2px; }
+    .cat-chip.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent-bright); }
+    .cat-chip input { display: none; }
+
+    .rounds-row { display: flex; align-items: center; gap: 14px; }
+    .rounds-num { font-family: 'Fredoka One', cursive; font-size: 30px; color: var(--accent-bright); min-width: 38px; text-align: center; }
+    .rnd-btn { width: 44px; height: 44px; background: var(--panel); border: 2px solid var(--border); border-radius: 9px; cursor: pointer; font-size: 20px; font-weight: 900; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all .15s; touch-action: manipulation; }
+    .rnd-btn:hover { border-color: var(--accent); color: var(--accent-bright); }
+    .rnd-btn:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 2px; }
+
+    textarea { resize: vertical; min-height: 80px; font-size: 14px; }
+    .hint { font-size: 12px; color: var(--text-muted); }
+
+    .lobby-foot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .start-hint { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+    /* ── GAME LAYOUT ── */
+    #screen-game { overflow: hidden; }
+    .game-grid { display: grid; grid-template-columns: 220px 1fr 252px; height: 100vh; }
+
+    .panel { display: flex; flex-direction: column; overflow: hidden; background: var(--panel); }
+    .panel-l { border-right: 1px solid var(--border); }
+    .panel-r { border-left: 1px solid var(--border); }
+    .panel-c { background: var(--bg); }
+
+    .ph { padding: 13px 15px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .pb { flex: 1; overflow-y: auto; padding: 10px; }
+
+    /* game player list */
+    .gp { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 10px; margin-bottom: 5px; transition: background .15s; position: relative; }
+    .gp.active { background: var(--accent-dim); border: 1px solid rgba(124,92,191,.3); }
+    .gp-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; color: #000; flex-shrink: 0; }
+    .gp-info { flex: 1; min-width: 0; }
+    .gp-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gp-sub { font-size: 11px; color: var(--text-muted); }
+    .gp-turn { font-size: 14px; flex-shrink: 0; }
+
+    /* ── GAME VIEWS ── */
+    .view { display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; overflow-y: auto; padding: 28px 24px; gap: 20px; }
+    .view.active { display: flex; }
+
+    /* word reveal */
+    .reveal-card { background: var(--card); border: 2px solid var(--border); border-radius: 22px; padding: 36px 44px; text-align: center; max-width: 380px; width: 100%; animation: popIn .5s cubic-bezier(.34,1.56,.64,1); }
+    .reveal-card.inn { border-color: rgba(78,205,196,.45); box-shadow: 0 0 40px rgba(78,205,196,.1); }
+    .reveal-card.imp { border-color: rgba(255,107,107,.45); box-shadow: 0 0 40px rgba(255,107,107,.1); }
+
+    .role-badge { display: inline-block; padding: 5px 14px; border-radius: 7px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; }
+    .role-badge.inn { background: rgba(78,205,196,.15); color: var(--innocent); }
+    .role-badge.imp { background: rgba(255,107,107,.15); color: var(--imposter); }
+
+    .word-label { font-size: 12px; text-transform: uppercase; letter-spacing: .15em; color: var(--text-muted); margin-bottom: 10px; }
+    .word-big { font-family: 'Fredoka One', cursive; font-size: 50px; line-height: 1.1; }
+
+    .imp-icon { font-size: 64px; margin-bottom: 10px; }
+    .imp-title { font-family: 'Fredoka One', cursive; font-size: 30px; color: var(--imposter); }
+    .imp-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+    .cdwn { font-size: 13px; color: var(--text-muted); }
+    .cdwn strong { color: var(--accent-bright); }
+
+    .order-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; max-width: 380px; width: 100%; }
+    .order-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: 12px; }
+    .order-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+    .order-item.cur { background: var(--accent-dim); color: var(--accent-bright); }
+    .order-num { font-family: 'Fredoka One', cursive; font-size: 16px; color: var(--text-muted); width: 22px; text-align: center; }
+    .order-item.cur .order-num { color: var(--accent-bright); }
+    .order-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #000; flex-shrink: 0; }
+
+    /* clue giving */
+    .whose-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 24px; text-align: center; max-width: 440px; width: 100%; animation: fadeIn .4s ease; }
+    .whose-name { font-family: 'Fredoka One', cursive; font-size: 24px; }
+    .whose-sub { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+
+    .my-turn-card { background: var(--card); border: 2px solid var(--accent); border-radius: 20px; padding: 26px; max-width: 440px; width: 100%; display: flex; flex-direction: column; gap: 14px; animation: pulseCard 2s ease infinite; }
+    @keyframes pulseCard { 0%,100% { box-shadow: 0 0 0 0 var(--accent-glow); } 50% { box-shadow: 0 0 0 8px rgba(124,92,191,0); } }
+    .my-turn-title { font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--accent-bright); text-align: center; }
+    .clue-input-row { display: flex; gap: 9px; }
+    .clue-input-row input { flex: 1; font-size: 17px; }
+
+    .word-reminder { background: var(--panel); border: 1px dashed var(--border-bright); border-radius: 12px; padding: 10px 16px; text-align: center; }
+    .wr-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
+    .wr-val { font-family: 'Fredoka One', cursive; font-size: 24px; margin-top: 3px; }
+    .wr-imp { font-size: 13px; color: var(--imposter); font-weight: 800; }
+
+    .waiting-icon { font-size: 44px; animation: float 2s ease-in-out infinite alternate; }
+    @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+
+    /* voting */
+    .vote-header { text-align: center; max-width: 480px; }
+    .vote-header h2 { font-family: 'Fredoka One', cursive; font-size: 28px; }
+    .vote-header p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+    .vote-progress { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 800; }
+    .vote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; max-width: 560px; width: 100%; }
+
+    .vote-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 18px 14px; text-align: center; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 8px; touch-action: manipulation; }
+    .vote-card:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 2px; }
+    .vote-card:not(.voted):not(.me):hover { border-color: var(--accent); background: var(--accent-dim); transform: translateY(-3px); }
+    .vote-card.selected { border-color: var(--danger); background: rgba(248,113,113,.1); transform: translateY(-3px); }
+    .vote-card.me { opacity: .4; cursor: not-allowed; }
+    .vote-card.voted { cursor: default; }
+    .v-avatar { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 22px; color: #000; }
+    .v-name { font-weight: 700; font-size: 14px; }
+
+    /* results */
+    .results-view { justify-content: flex-start; }
+    .outcome-text { font-family: 'Fredoka One', cursive; font-size: 34px; text-align: center; animation: popIn .5s cubic-bezier(.34,1.56,.64,1); }
+    .outcome-text.caught { color: var(--success); }
+    .outcome-text.escaped { color: var(--imposter); }
+
+    .imposters-card { background: var(--card); border: 2px solid rgba(255,107,107,.35); border-radius: 18px; padding: 20px 26px; text-align: center; max-width: 380px; width: 100%; animation: popIn .4s .1s cubic-bezier(.34,1.56,.64,1) both; }
+    .ic-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: 8px; }
+    .ic-names { font-family: 'Fredoka One', cursive; font-size: 26px; color: var(--imposter); }
+
+    .word-banner { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 22px; text-align: center; max-width: 380px; width: 100%; }
+    .wb-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
+    .wb-word { font-family: 'Fredoka One', cursive; font-size: 30px; margin-top: 4px; }
+
+    .guess-box { background: var(--card); border: 2px solid var(--accent); border-radius: 16px; padding: 18px; max-width: 380px; width: 100%; }
+    .guess-box h4 { font-size: 13px; font-weight: 800; color: var(--accent-bright); margin-bottom: 12px; }
+    .guess-row { display: flex; gap: 9px; }
+    .guess-row input { flex: 1; }
+    .guess-result { padding: 11px 16px; border-radius: 10px; font-weight: 800; font-size: 14px; text-align: center; max-width: 380px; width: 100%; }
+    .guess-result.ok { background: rgba(74,222,128,.12); color: var(--success); border: 1px solid rgba(74,222,128,.25); }
+    .guess-result.no { background: rgba(248,113,113,.12); color: var(--danger); border: 1px solid rgba(248,113,113,.25); }
+
+    .scores-section { max-width: 400px; width: 100%; }
+    .scores-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: 10px; }
+    .score-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 11px; margin-bottom: 7px; }
+    .score-row.imp-player { border-color: rgba(255,107,107,.3); }
+    .score-rank { font-family: 'Fredoka One', cursive; font-size: 18px; color: var(--text-muted); width: 26px; }
+    .score-name { flex: 1; font-weight: 700; font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .role-tag { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; }
+    .role-tag.imp { background: rgba(255,107,107,.15); color: var(--imposter); }
+    .role-tag.inn { background: rgba(78,205,196,.15); color: var(--innocent); }
+    .score-pts { font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--accent-bright); }
+
+    /* game over */
+    .gameover-title { font-family: 'Fredoka One', cursive; font-size: 44px; text-align: center; background: linear-gradient(135deg, #fbbf24, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* clue feed */
+    .clue-bubble { display: flex; gap: 8px; animation: slideR .3s ease; }
+    @keyframes slideR { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    .cb-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #000; }
+    .cb-body { flex: 1; }
+    .cb-name { font-size: 12px; font-weight: 800; margin-bottom: 3px; }
+    .cb-text { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; font-size: 14px; font-weight: 700; word-break: break-word; }
+    .feed-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: 24px 16px; line-height: 1.6; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.7); } 70% { transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── SCROLLBARS ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── ACCESSIBILITY UTILITIES ── */
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 820px) {
+      .game-grid { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+      .panel-l, .panel-r { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: LANDING
+  ══════════════════════════════════════════ -->
+  <div id="screen-landing" class="screen active">
+    <div class="landing-wrap">
+      <div style="text-align:center;">
+        <div class="logo"><span class="logo-emoji">🕵️</span> IMPOSTER</div>
+        <p class="tagline">Can you spot the imposter?</p>
+      </div>
+
+      <div class="card">
+        <div>
+          <label class="field-label" for="inp-name">Your Name</label>
+          <input type="text" id="inp-name" placeholder="Enter your name..." maxlength="20" autocomplete="name">
+        </div>
+
+        <button id="btn-create" class="btn btn-primary btn-full btn-lg">✨ Create Room</button>
+
+        <div class="divider">or join with a code</div>
+
+        <div class="join-row">
+          <label class="visually-hidden" for="inp-code">Room Code</label>
+          <input type="text" id="inp-code" placeholder="XXXX" maxlength="4" autocomplete="off" aria-label="Room Code">
+          <button id="btn-join" class="btn btn-secondary btn-lg" style="flex-shrink:0;">Join →</button>
+        </div>
+
+        <p class="err" id="land-err" role="alert" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: LOBBY
+  ══════════════════════════════════════════ -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-wrap">
+
+      <div class="lobby-top">
+        <div class="code-pill">
+          <div>
+            <div class="code-label">Room Code</div>
+            <div class="code-val" id="lby-code">????</div>
+          </div>
+          <button class="btn-icon" id="btn-copy-code" title="Copy code" aria-label="Copy room code">📋</button>
+          <button class="btn-icon" id="btn-copy-link" title="Copy invite link" aria-label="Copy invite link">🔗</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-leave">← Leave</button>
+      </div>
+
+      <div class="lobby-grid">
+        <!-- Players -->
+        <div class="section">
+          <div class="section-title">Players (<span id="lby-pcount">0</span>/10)</div>
+          <div id="lby-players"></div>
+        </div>
+
+        <!-- Settings -->
+        <div class="section" id="lby-settings">
+          <div class="section-title">Word Categories</div>
+          <div class="cat-grid" id="cat-grid"></div>
+
+          <div class="section-title">Rounds</div>
+          <div class="rounds-row">
+            <button class="rnd-btn" id="rnd-minus">−</button>
+            <span class="rounds-num" id="rnd-val">3</span>
+            <button class="rnd-btn" id="rnd-plus">+</button>
+          </div>
+
+          <label class="section-title" for="custom-words">Custom Words</label>
+          <textarea id="custom-words" placeholder="One word per line — e.g.&#10;Bangkok&#10;telescope&#10;ramen" rows="4" aria-describedby="custom-words-hint"></textarea>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <p class="hint" id="custom-words-hint">Added alongside chosen categories</p>
+            <button class="btn btn-secondary btn-sm" id="btn-save-words">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lobby-foot">
+        <button id="btn-start" class="btn btn-primary btn-lg" style="min-width:220px;" disabled>🚀 Start Game</button>
+        <p class="start-hint" id="start-hint">Need at least 3 players</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: GAME
+  ══════════════════════════════════════════ -->
+  <div id="screen-game" class="screen">
+    <div class="game-grid">
+
+      <!-- LEFT: Players -->
+      <div class="panel panel-l">
+        <div class="ph">
+          <span>Players</span>
+          <span id="rnd-display" style="color:var(--accent-bright);font-size:13px;">Rnd 1</span>
+        </div>
+        <div class="pb" id="game-players"></div>
+      </div>
+
+      <!-- CENTER: Views -->
+      <div class="panel panel-c">
+
+        <!-- Word Reveal -->
+        <div id="v-reveal" class="view"><!-- injected --></div>
+
+        <!-- Clue Giving -->
+        <div id="v-clue" class="view"><!-- injected --></div>
+
+        <!-- Voting -->
+        <div id="v-vote" class="view">
+          <div class="vote-header">
+            <h2>🗳️ Who's the Imposter?</h2>
+            <p>Vote for who you think is faking it</p>
+          </div>
+          <div class="vote-progress" id="vote-prog">0 / 0 voted</div>
+          <div class="vote-grid" id="vote-grid"></div>
+        </div>
+
+        <!-- Results -->
+        <div id="v-results" class="view results-view"><!-- injected --></div>
+
+        <!-- Game Over -->
+        <div id="v-gameover" class="view" style="justify-content:center;">
+          <div class="gameover-title">🏆 Game Over!</div>
+          <div id="final-scores" style="width:100%;max-width:400px;margin-top:8px;"></div>
+          <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;">
+            <button id="btn-play-again" class="btn btn-primary">🔄 Play Again</button>
+            <button id="btn-to-lobby" class="btn btn-secondary">Back to Lobby</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Clue Feed -->
+      <div class="panel panel-r">
+        <div class="ph">
+          <span>Clue Feed</span>
+          <span id="clue-count" style="color:var(--accent-bright);font-size:13px;">0</span>
+        </div>
+        <div class="pb" id="feed-body">
+          <div class="feed-empty" id="feed-empty">Clues will appear here as players give them 👀</div>
+          <div id="feed-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const socket = io();
+let myId = null, myPlayer = null, myRoom = null;
+let isHost = false, myRole = null, myWord = null;
+let players = [], clueOrder = [];
+let hasVoted = false, hasGuessed = false;
+let selectedCats = [], roundsCfg = 3;
+let clueCount = 0;
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg, type = '') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 2800);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('v-' + id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+//  LANDING
+// ══════════════════════════════════════════
+const inpName = document.getElementById('inp-name');
+const inpCode = document.getElementById('inp-code');
+const landErr = document.getElementById('land-err');
+
+inpCode.addEventListener('input', e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''));
+
+document.getElementById('btn-create').addEventListener('click', () => {
+  const name = inpName.value.trim();
+  if (!name) { landErr.textContent = 'Enter your name first!'; return; }
+  landErr.textContent = '';
+  socket.emit('create-room', { name }, res => {
+    if (!res.success) { landErr.textContent = res.error; return; }
+    myId = socket.id; myPlayer = res.player; myRoom = res.room; isHost = true;
+    enterLobby(res.room);
+  });
+});
+
+document.getElementById('btn-join').addEventListener('click', doJoin);
+inpCode.addEventListener('keydown', e => e.key === 'Enter' && doJoin());
+inpName.addEventListener('keydown', e => { if (e.key === 'Enter') { if (inpCode.value.length === 4) doJoin(); else document.getElementById('btn-create').click(); } });
+
+function doJoin() {
+  const name = inpName.value.trim();
+  const code = inpCode.value.trim();
+  if (!name) { landErr.textContent = 'Enter your name first!'; return; }
+  if (code.length !== 4) { landErr.textContent = 'Enter a 4-letter room code!'; return; }
+  landErr.textContent = '';
+  socket.emit('join-room', { name, code }, res => {
+    if (!res.success) { landErr.textContent = res.error; return; }
+    myId = socket.id; myPlayer = res.player; myRoom = res.room;
+    isHost = res.room.host === myId;
+    enterLobby(res.room);
+  });
+}
+
+// Auto-fill code from URL
+const urlCode = new URLSearchParams(location.search).get('join');
+if (urlCode) inpCode.value = urlCode.toUpperCase().slice(0,4);
+
+// ══════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════
+function enterLobby(room) {
+  myRoom = room; isHost = room.host === myId;
+  players = room.players; roundsCfg = room.rounds;
+  selectedCats = room.selectedCategories || Object.keys(DEFAULT_CATS);
+  document.getElementById('lby-code').textContent = room.code;
+  renderLobbyPlayers(players);
+  buildCatGrid();
+  updateRoundsDisplay();
+  if (room.customWords) document.getElementById('custom-words').value = room.customWords.join('\n');
+  setSettingsEnabled(isHost);
+  updateStartBtn();
+  showScreen('lobby');
+}
+
+const DEFAULT_CATS = { Animals:1, Food:1, Places:1, Objects:1, Movies:1, Sports:1, Jobs:1 };
+
+function buildCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = '';
+  Object.keys(DEFAULT_CATS).forEach(cat => {
+    const on = selectedCats.includes(cat);
+    const chip = document.createElement('label');
+    chip.className = 'cat-chip' + (on ? ' on' : '');
+    chip.innerHTML = `<input type="checkbox" value="${cat}" ${on?'checked':''}>${esc(cat)}`;
+    chip.querySelector('input').addEventListener('change', () => {
+      chip.classList.toggle('on');
+      selectedCats = [...grid.querySelectorAll('input:checked')].map(i => i.value);
+      saveSettings();
+    });
+    grid.appendChild(chip);
+  });
+}
+
+function renderLobbyPlayers(list) {
+  document.getElementById('lby-pcount').textContent = list.length;
+  const c = document.getElementById('lby-players');
+  c.innerHTML = '';
+  list.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'p-item';
+    el.innerHTML = `
+      <div class="p-avatar" style="background:${p.color}">${esc(p.name[0].toUpperCase())}</div>
+      <span class="p-name">${esc(p.name)}</span>
+      ${p.id === myRoom.host ? '<span class="badge badge-host">HOST</span>' : ''}
+      ${p.id === myId ? '<span class="badge badge-you">YOU</span>' : ''}
+      ${isHost && p.id !== myId ? `<button class="btn-icon" style="margin-left:auto" onclick="kick('${p.id}')" title="Kick ${esc(p.name)}" aria-label="Kick ${esc(p.name)}">✕</button>` : ''}
+    `;
+    c.appendChild(el);
+  });
+}
+
+function kick(id) { socket.emit('kick-player', { targetId: id }); }
+
+function setSettingsEnabled(enabled) {
+  const s = document.getElementById('lby-settings');
+  s.style.opacity = enabled ? '1' : '0.45';
+  s.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+function updateStartBtn() {
+  const btn = document.getElementById('btn-start');
+  const hint = document.getElementById('start-hint');
+  if (!isHost) { btn.style.display = 'none'; hint.textContent = 'Waiting for the host to start...'; return; }
+  btn.style.display = '';
+  const n = players.length;
+  if (n < 3) { btn.disabled = true; hint.textContent = `Need ${3-n} more player${3-n!==1?'s':''}`; }
+  else { btn.disabled = false; hint.textContent = `${n} players ready — let's go! 🎉`; }
+}
+
+function updateRoundsDisplay() { document.getElementById('rnd-val').textContent = roundsCfg; }
+
+function saveSettings() {
+  if (!isHost) return;
+  const words = document.getElementById('custom-words').value.split('\n').map(w=>w.trim()).filter(Boolean);
+  socket.emit('update-settings', { customWords: words, selectedCategories: selectedCats, rounds: roundsCfg });
+}
+
+document.getElementById('rnd-minus').addEventListener('click', () => { if(roundsCfg>1){roundsCfg--;updateRoundsDisplay();saveSettings();} });
+document.getElementById('rnd-plus').addEventListener('click',  () => { if(roundsCfg<10){roundsCfg++;updateRoundsDisplay();saveSettings();} });
+document.getElementById('btn-save-words').addEventListener('click', () => { saveSettings(); toast('Custom words saved!', 's'); });
+document.getElementById('btn-start').addEventListener('click', () => socket.emit('start-game'));
+document.getElementById('btn-leave').addEventListener('click', () => {
+  if (confirm('Leave the room? You\'ll lose your spot.')) location.reload();
+});
+
+document.getElementById('btn-copy-code').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('lby-code').textContent).then(()=>toast('Room code copied!','s'));
+});
+document.getElementById('btn-copy-link').addEventListener('click', () => {
+  const url = `${location.origin}?join=${document.getElementById('lby-code').textContent}`;
+  navigator.clipboard.writeText(url).then(()=>toast('Invite link copied!','s'));
+});
+
+// ══════════════════════════════════════════
+//  SOCKET: LOBBY EVENTS
+// ══════════════════════════════════════════
+socket.on('player-joined', ({ player, players: p }) => {
+  players = p; renderLobbyPlayers(p); updateStartBtn(); toast(`${player.name} joined!`);
+});
+
+socket.on('player-left', ({ playerId, leftName, newHost, players: p }) => {
+  players = p || players.filter(x=>x.id!==playerId);
+  if (newHost) { myRoom.host = newHost; isHost = newHost === myId; setSettingsEnabled(isHost); }
+  renderLobbyPlayers(players); updateStartBtn();
+  if (leftName) toast(`${leftName} left`);
+});
+
+socket.on('settings-updated', ({ customWords, selectedCategories, rounds }) => {
+  selectedCats = selectedCategories; roundsCfg = rounds; updateRoundsDisplay();
+  if (!isHost) toast('Host updated settings');
+});
+
+socket.on('room-update', room => { myRoom = room; players = room.players; renderLobbyPlayers(players); updateStartBtn(); });
+socket.on('kicked', () => { toast('You were kicked from the room', 'e'); setTimeout(()=>location.reload(),2000); });
+socket.on('error-msg', msg => toast(msg, 'e'));
+
+socket.on('lobby-return', ({ room }) => {
+  myRoom = room; players = room.players; isHost = room.host === myId;
+  enterLobby(room);
+});
+
+// ══════════════════════════════════════════
+//  GAME START
+// ══════════════════════════════════════════
+socket.on('game-start', ({ word, isImposter, clueOrder: order, players: gPlayers, round, totalRounds }) => {
+  myRole = isImposter ? 'imposter' : 'innocent';
+  myWord = word;
+  clueOrder = order;
+  players = gPlayers;
+  clueCount = 0;
+  hasVoted = false;
+  hasGuessed = false;
+
+  document.getElementById('rnd-display').textContent = `Rnd ${round}/${totalRounds}`;
+  renderGamePlayers(players, order, -1);
+  clearFeed();
+  showScreen('game');
+  showView('reveal');
+  renderReveal(word, isImposter, order, gPlayers);
+});
+
+function renderReveal(word, isImposter, order, gPlayers) {
+  const v = document.getElementById('v-reveal');
+
+  const orderHTML = order.map((id, i) => {
+    const p = gPlayers.find(p=>p.id===id);
+    const you = id === myId;
+    return `<div class="order-item${i===0?' cur':''}">
+      <span class="order-num">${i+1}</span>
+      <div class="order-av" style="background:${p?.color}">${p?.name[0].toUpperCase()}</div>
+      <span>${esc(p?.name)}${you?' <span style="opacity:.5;font-size:11px;">(you)</span>':''}</span>
+      ${i===0?'<span style="margin-left:auto">🎯</span>':''}
+    </div>`;
+  }).join('');
+
+  if (isImposter) {
+    v.innerHTML = `
+      <div class="reveal-card imp">
+        <span class="role-badge imp">🕵️ Imposter</span>
+        <div class="imp-icon">🕵️</div>
+        <div class="imp-title">You're the Imposter!</div>
+        <div class="imp-sub">Give vague clues to blend in — you don't know the word!</div>
+      </div>
+      <div class="order-card"><div class="order-title">Clue Order</div>${orderHTML}</div>
+      <p class="cdwn">Starting in <strong id="cdwn-num">5</strong>s…</p>
+    `;
+  } else {
+    v.innerHTML = `
+      <div class="reveal-card inn">
+        <span class="role-badge inn">👤 Innocent</span>
+        <div class="word-label">The secret word is</div>
+        <div class="word-big">${esc(word)}</div>
+      </div>
+      <div class="order-card"><div class="order-title">Clue Order</div>${orderHTML}</div>
+      <p class="cdwn">Starting in <strong id="cdwn-num">5</strong>s…</p>
+    `;
+  }
+
+  let n = 5;
+  const t = setInterval(()=>{ n--; const el=document.getElementById('cdwn-num'); if(el)el.textContent=n; if(n<=0)clearInterval(t); },1000);
+}
+
+// ══════════════════════════════════════════
+//  CLUE TURN
+// ══════════════════════════════════════════
+socket.on('clue-turn', ({ playerId, index, total }) => {
+  renderGamePlayers(players, clueOrder, index);
+  showView('clue');
+  renderClueTurn(playerId, index, total);
+});
+
+function renderClueTurn(playerId, index, total) {
+  const v = document.getElementById('v-clue');
+  const p = players.find(p=>p.id===playerId);
+  const isMe = playerId === myId;
+
+  if (isMe) {
+    const wordBlock = myRole === 'innocent'
+      ? `<div class="word-reminder"><div class="wr-label">The word is</div><div class="wr-val">${esc(myWord)}</div></div>`
+      : `<div class="word-reminder"><div class="wr-imp">🕵️ You're the imposter — you don't know the word!</div></div>`;
+
+    v.innerHTML = `
+      <div class="my-turn-card">
+        <div class="my-turn-title">🎯 Your Turn!</div>
+        ${wordBlock}
+        <div class="clue-input-row">
+          <input type="text" id="clue-inp" placeholder="Give a vague clue..." maxlength="60" autocomplete="off">
+          <button class="btn btn-primary" id="btn-send-clue">Send</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);text-align:center;">Clue ${index+1} of ${total} — Be subtle!</p>
+      </div>
+    `;
+
+    const inp = document.getElementById('clue-inp');
+    const btn = document.getElementById('btn-send-clue');
+    inp.focus();
+
+    const send = () => {
+      const clue = inp.value.trim();
+      if (!clue) return;
+      btn.disabled = inp.disabled = true;
+      socket.emit('submit-clue', { clue });
+    };
+
+    btn.addEventListener('click', send);
+    inp.addEventListener('keydown', e => e.key==='Enter' && send());
+
+  } else {
+    v.innerHTML = `
+      <div class="whose-card">
+        <div class="whose-name" style="color:${p?.color}">${esc(p?.name||'?')}</div>
+        <div class="whose-sub">is giving clue ${index+1} of ${total}…</div>
+      </div>
+      <div class="waiting-icon">💭</div>
+      ${myRole==='innocent'
+        ? `<div class="word-reminder" style="max-width:320px;"><div class="wr-label">The word is</div><div class="wr-val">${esc(myWord)}</div></div>`
+        : `<div class="word-reminder" style="max-width:320px;"><div class="wr-imp">🕵️ Stay calm — blend in!</div></div>`
+      }
+    `;
+  }
+}
+
+// ══════════════════════════════════════════
+//  CLUE FEED
+// ══════════════════════════════════════════
+socket.on('clue-submitted', ({ entry }) => addToFeed(entry));
+
+function addToFeed(entry) {
+  clueCount++;
+  document.getElementById('clue-count').textContent = clueCount;
+  document.getElementById('feed-empty').style.display = 'none';
+  const list = document.getElementById('feed-list');
+  const el = document.createElement('div');
+  el.className = 'clue-bubble';
+  el.style.marginBottom = '9px';
+  el.innerHTML = `
+    <div class="cb-av" style="background:${entry.playerColor}">${entry.playerName[0].toUpperCase()}</div>
+    <div class="cb-body">
+      <div class="cb-name" style="color:${entry.playerColor}">${esc(entry.playerName)}</div>
+      <div class="cb-text">${esc(entry.clue)}</div>
+    </div>
+  `;
+  list.appendChild(el);
+  const fb = document.getElementById('feed-body');
+  fb.scrollTop = fb.scrollHeight;
+}
+
+function clearFeed() {
+  clueCount = 0;
+  document.getElementById('clue-count').textContent = '0';
+  document.getElementById('feed-list').innerHTML = '';
+  document.getElementById('feed-empty').style.display = '';
+}
+
+// ══════════════════════════════════════════
+//  VOTING
+// ══════════════════════════════════════════
+socket.on('voting-start', ({ players: vp }) => {
+  hasVoted = false;
+  players = vp.map(vpi => players.find(p=>p.id===vpi.id)||vpi);
+  showView('vote');
+  const grid = document.getElementById('vote-grid');
+  grid.innerHTML = '';
+  document.getElementById('vote-prog').textContent = `0 / ${vp.length} voted`;
+
+  vp.forEach(p => {
+    const card = document.createElement('div');
+    const isMe = p.id === myId;
+    card.className = 'vote-card' + (isMe ? ' me' : '');
+    card.id = 'vc-'+p.id;
+    card.setAttribute('role', isMe ? 'img' : 'button');
+    card.setAttribute('aria-label', isMe ? `${p.name} (you)` : `Vote for ${p.name}`);
+    if (!isMe) card.setAttribute('tabindex', '0');
+    card.innerHTML = `<div class="v-avatar" style="background:${p.color}" aria-hidden="true">${p.name[0].toUpperCase()}</div><div class="v-name">${esc(p.name)}</div>`;
+    if (!isMe) {
+      const vote = () => { if (!hasVoted) doVote(p.id); };
+      card.addEventListener('click', vote);
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vote(); } });
+    }
+    grid.appendChild(card);
+  });
+});
+
+function doVote(targetId) {
+  hasVoted = true;
+  document.querySelectorAll('.vote-card').forEach(c=>c.classList.add('voted'));
+  document.getElementById('vc-'+targetId)?.classList.add('selected');
+  socket.emit('vote', { targetId });
+}
+
+socket.on('vote-update', ({ count, total }) => {
+  document.getElementById('vote-prog').textContent = `${count} / ${total} voted`;
+});
+
+// ══════════════════════════════════════════
+//  RESULTS
+// ══════════════════════════════════════════
+socket.on('results', ({ word, imposters, imposterNames, imposterCaught, voteCounts, votes, players: rp, round, totalRounds, isLastRound }) => {
+  players = rp;
+  const amIImposter = imposters.includes(myId);
+  showView('results');
+  renderResults({ word, imposters, imposterNames, imposterCaught, voteCounts, rp, round, totalRounds, isLastRound, amIImposter });
+});
+
+function renderResults({ word, imposters, imposterNames, imposterCaught, voteCounts, rp, round, totalRounds, isLastRound, amIImposter }) {
+  const v = document.getElementById('v-results');
+
+  const voteSorted = [...rp].sort((a,b)=>(voteCounts[b.id]||0)-(voteCounts[a.id]||0));
+  const scoreSorted = [...rp].sort((a,b)=>b.score-a.score);
+
+  const voteRows = voteSorted.map(p => {
+    const imp = imposters.includes(p.id);
+    const vc = voteCounts[p.id]||0;
+    return `<div class="score-row ${imp?'imp-player':''}">
+      <div class="p-avatar" style="background:${p.color};width:28px;height:28px;font-size:12px;">${p.name[0].toUpperCase()}</div>
+      <span class="score-name">${esc(p.name)}</span>
+      <span class="role-tag ${imp?'imp':'inn'}">${imp?'🕵️':'👤'}</span>
+      <span style="font-weight:800;color:var(--danger);">${vc} vote${vc!==1?'s':''}</span>
+    </div>`;
+  }).join('');
+
+  const scoreRows = scoreSorted.map((p,i) => {
+    const imp = imposters.includes(p.id);
+    return `<div class="score-row ${imp?'imp-player':''}" id="sr-${p.id}">
+      <span class="score-rank">${['🥇','🥈','🥉'][i]||i+1}</span>
+      <div class="p-avatar" style="background:${p.color};width:26px;height:26px;font-size:11px;">${p.name[0].toUpperCase()}</div>
+      <span class="score-name">${esc(p.name)}</span>
+      <span class="role-tag ${imp?'imp':'inn'}">${imp?'🕵️':'👤'}</span>
+      <span class="score-pts" id="pts-${p.id}">${p.score}</span>
+    </div>`;
+  }).join('');
+
+  const guessBlock = (amIImposter && imposterCaught && !hasGuessed)
+    ? `<div class="guess-box" id="guess-box">
+        <h4>🎯 Guess the word for +150 bonus points!</h4>
+        <div class="guess-row">
+          <input type="text" id="guess-inp" placeholder="What was the word?" maxlength="50">
+          <button class="btn btn-primary btn-sm" id="btn-guess">Guess</button>
+        </div>
+      </div>` : '';
+
+  const hostBtns = isHost
+    ? `${isLastRound
+        ? `<button class="btn btn-warning" id="btn-final" style="background:linear-gradient(135deg,#fbbf24,#f97316);color:#000;">🏆 Final Results</button>`
+        : `<button class="btn btn-primary" id="btn-next">⏭️ Next Round (${round}/${totalRounds})</button>`}
+       <button class="btn btn-secondary" id="btn-rlby">Back to Lobby</button>`
+    : `<p style="color:var(--text-muted);font-size:14px;font-weight:700;">Waiting for host…</p>`;
+
+  v.innerHTML = `
+    <div class="outcome-text ${imposterCaught?'caught':'escaped'}">${imposterCaught?'🎉 Imposter Caught!':'🕵️ Imposter Escaped!'}</div>
+    <div class="imposters-card">
+      <div class="ic-label">The Imposter${imposters.length>1?'s were':' was'}</div>
+      <div class="ic-names">${imposterNames.map(esc).join(' &amp; ')}</div>
+    </div>
+    <div class="word-banner"><div class="wb-lbl">The word was</div><div class="wb-word">${esc(word)}</div></div>
+    ${guessBlock}
+    <div class="scores-section">
+      <div class="scores-title">Vote Results</div>
+      ${voteRows}
+    </div>
+    <div class="scores-section" id="score-section">
+      <div class="scores-title">Scores</div>
+      ${scoreRows}
+    </div>
+    <div style="display:flex;gap:11px;flex-wrap:wrap;justify-content:center;padding-bottom:20px;">
+      ${hostBtns}
+    </div>
+  `;
+
+  document.getElementById('btn-next')?.addEventListener('click', () => socket.emit('next-round'));
+  document.getElementById('btn-final')?.addEventListener('click', () => socket.emit('next-round'));
+  document.getElementById('btn-rlby')?.addEventListener('click', () => socket.emit('back-to-lobby'));
+
+  if (amIImposter && imposterCaught && !hasGuessed) {
+    const inp = document.getElementById('guess-inp');
+    const btn = document.getElementById('btn-guess');
+    const doGuess = () => {
+      const g = inp.value.trim();
+      if (!g) return;
+      hasGuessed = true;
+      btn.disabled = inp.disabled = true;
+      socket.emit('imposter-guess', { guess: g });
+    };
+    btn?.addEventListener('click', doGuess);
+    inp?.addEventListener('keydown', e => e.key==='Enter' && doGuess());
+  }
+}
+
+socket.on('imposter-guessed', ({ correct, guess, word, guesser, players: up }) => {
+  players = up;
+  const p = players.find(p=>p.id===guesser);
+  const r = document.createElement('div');
+  r.className = `guess-result ${correct?'ok':'no'}`;
+  r.textContent = correct
+    ? `✅ ${p?.name} guessed correctly: "${word}" — +150 pts!`
+    : `❌ ${p?.name} guessed wrong: "${guess}"`;
+
+  const gb = document.getElementById('guess-box');
+  if (gb) gb.replaceWith(r);
+
+  if (correct) {
+    const ptEl = document.getElementById('pts-' + guesser);
+    const pData = players.find(p=>p.id===guesser);
+    if (ptEl && pData) ptEl.textContent = pData.score;
+  }
+});
+
+// ══════════════════════════════════════════
+//  GAME OVER
+// ══════════════════════════════════════════
+socket.on('game-over', ({ players: fp }) => {
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('final-scores').innerHTML = fp.map((p,i)=>`
+    <div class="score-row" style="${i===0?'border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.05);':''}">
+      <span class="score-rank">${medals[i]||i+1}</span>
+      <div class="p-avatar" style="background:${p.color};width:30px;height:30px;font-size:13px;">${p.name[0].toUpperCase()}</div>
+      <span class="score-name">${esc(p.name)}</span>
+      <span class="score-pts">${p.score}</span>
+    </div>
+  `).join('');
+  showView('gameover');
+});
+
+document.getElementById('btn-play-again').addEventListener('click', () => socket.emit('start-game'));
+document.getElementById('btn-to-lobby').addEventListener('click', () => socket.emit('back-to-lobby'));
+
+// ══════════════════════════════════════════
+//  GAME PLAYER LIST
+// ══════════════════════════════════════════
+function renderGamePlayers(list, order, activeIdx) {
+  const c = document.getElementById('game-players');
+  c.innerHTML = '';
+  list.forEach(p => {
+    const isActive = order[activeIdx] === p.id;
+    const orderPos = order.indexOf(p.id);
+    const el = document.createElement('div');
+    el.className = 'gp' + (isActive ? ' active' : '');
+    el.innerHTML = `
+      <div class="gp-avatar" style="background:${p.color}">${p.name[0].toUpperCase()}</div>
+      <div class="gp-info">
+        <div class="gp-name">${esc(p.name)}${p.id===myId?' <span style="opacity:.45;font-size:10px;">(you)</span>':''}</div>
+        <div class="gp-sub">${orderPos>=0?`Clue #${orderPos+1} · `:''} ${p.score} pts</div>
+      </div>
+      ${isActive?'<span class="gp-turn">🎯</span>':''}
+    `;
+    c.appendChild(el);
+  });
+}
+
+// ══════════════════════════════════════════
+//  CONNECT
+// ══════════════════════════════════════════
+socket.on('connect', () => { myId = socket.id; });
+</script>
+</body>
+</html>
