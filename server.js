@@ -9,7 +9,7 @@ async function getHintWord(word) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) { console.warn('[hint] GEMINI_API_KEY not set — skipping hint'); return null; }
 
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest'];
 
   for (const model of models) {
     try {
@@ -58,7 +58,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/hint-test', async (req, res) => {
   const word = req.query.word || 'pizza';
   const key = process.env.GEMINI_API_KEY;
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest'];
   const results = [];
 
   for (const model of models) {
