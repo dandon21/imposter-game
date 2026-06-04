@@ -4,49 +4,35 @@ const { Server } = require('socket.io');
 const path = require('path');
 const os = require('os');
 
-// ===== GEMINI HINT =====
+// ===== HINT WORD =====
 async function getHintWord(word) {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) { console.warn('[hint] GEMINI_API_KEY not set — skipping hint'); return null; }
-
-  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest'];
-
-  for (const model of models) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text:
-              `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
-              `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
-              `The hint should help them give believable clues without giving the word away. ` +
-              `Reply with ONLY the hint word or phrase, nothing else, no punctuation.`
-            }] }],
-            generationConfig: { maxOutputTokens: 20, temperature: 0.7 },
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const errText = await res.text();
-        console.warn(`[hint] model ${model} returned ${res.status}: ${errText.slice(0, 200)}`);
-        continue;
-      }
-
-      const data = await res.json();
-      const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (hint) { console.log(`[hint] "${word}" → "${hint}" (model: ${model})`); return hint; }
-      console.warn(`[hint] model ${model} returned empty hint for "${word}"`);
-    } catch (err) {
-      console.error(`[hint] fetch error for model ${model}:`, err.message);
-    }
+  const key = process.env.GROQ_API_KEY;
+  if (!key) { console.warn('[hint] GROQ_API_KEY not set — skipping hint'); return null; }
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'user', content:
+          `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
+          `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
+          `The hint should help them give believable clues without giving the word away. ` +
+          `Reply with ONLY the hint word or phrase, nothing else, no punctuation.`
+        }],
+        max_tokens: 20,
+        temperature: 0.7,
+      }),
+    });
+    if (!res.ok) { console.warn(`[hint] Groq returned ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
+    const data = await res.json();
+    const hint = data?.choices?.[0]?.message?.content?.trim();
+    if (hint) { console.log(`[hint] "${word}" → "${hint}"`); return hint; }
+    return null;
+  } catch (err) {
+    console.error('[hint] fetch error:', err.message);
+    return null;
   }
-
-  console.warn(`[hint] all models failed for "${word}" — no hint this round`);
-  return null;
 }
 
 const app = express();
@@ -57,32 +43,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/hint-test', async (req, res) => {
   const word = req.query.word || 'pizza';
-  const key = process.env.GEMINI_API_KEY;
-  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest'];
-  const results = [];
-
-  for (const model of models) {
-    try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: `Say one word related to "${word}". Reply with ONLY that word.` }] }],
-            generationConfig: { maxOutputTokens: 20, temperature: 0.7 } }) }
-      );
-      const body = await r.text();
-      if (r.ok) {
-        const hint = JSON.parse(body)?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        results.push({ model, status: r.status, hint: hint || null });
-        if (hint) break;
-      } else {
-        results.push({ model, status: r.status, error: body.slice(0, 300) });
-      }
-    } catch (err) {
-      results.push({ model, error: err.message });
-    }
-  }
-
-  res.json({ word, keySet: !!key, results });
+  const hint = await getHintWord(word);
+  res.json({ word, hint, keySet: !!process.env.GROQ_API_KEY });
 });
 
 // ===== WORD LISTS =====
