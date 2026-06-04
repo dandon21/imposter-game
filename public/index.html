@@ -197,6 +197,10 @@
     .imp-icon { font-size: 60px; margin-bottom: 10px; }
     .imp-title { font-family: 'Fredoka One', cursive; font-size: 28px; color: var(--imposter); text-shadow: 0 0 24px rgba(255,107,107,0.4); }
     .imp-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+    .imp-hint { margin-top: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-md); padding: 12px 16px; text-align: center; }
+    .imp-hint-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); margin-bottom: 6px; }
+    .imp-hint-word { font-family: 'Fredoka One', cursive; font-size: 26px; color: var(--accent-bright); text-shadow: 0 0 16px rgba(167,139,250,0.4); }
+    .imp-hint-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
     .cdwn { font-size: 13px; color: var(--text-muted); font-weight: 500; }
     .cdwn strong { color: var(--accent-bright); font-variant-numeric: tabular-nums; }
@@ -674,7 +678,7 @@ socket.on('lobby-return', ({ room }) => {
 // ══════════════════════════════════════════
 //  GAME START
 // ══════════════════════════════════════════
-socket.on('game-start', ({ word, isImposter, clueOrder: order, players: gPlayers, round, totalRounds }) => {
+socket.on('game-start', ({ word, isImposter, hintWord, clueOrder: order, players: gPlayers, round, totalRounds }) => {
   myRole = isImposter ? 'imposter' : 'innocent';
   myWord = word;
   clueOrder = order;
@@ -688,10 +692,10 @@ socket.on('game-start', ({ word, isImposter, clueOrder: order, players: gPlayers
   clearFeed();
   showScreen('game');
   showView('reveal');
-  renderReveal(word, isImposter, order, gPlayers);
+  renderReveal(word, isImposter, hintWord, order, gPlayers);
 });
 
-function renderReveal(word, isImposter, order, gPlayers) {
+function renderReveal(word, isImposter, hintWord, order, gPlayers) {
   const v = document.getElementById('v-reveal');
 
   const orderHTML = order.map((id, i) => {
@@ -706,12 +710,20 @@ function renderReveal(word, isImposter, order, gPlayers) {
   }).join('');
 
   if (isImposter) {
+    const hintHTML = hintWord
+      ? `<div class="imp-hint">
+          <div class="imp-hint-label">Your hint</div>
+          <div class="imp-hint-word">${esc(hintWord)}</div>
+          <div class="imp-hint-sub">Use this to guide your clues</div>
+        </div>`
+      : '';
     v.innerHTML = `
       <div class="reveal-card imp">
         <span class="role-badge imp">🕵️ Imposter</span>
         <div class="imp-icon">🕵️</div>
         <div class="imp-title">You're the Imposter!</div>
         <div class="imp-sub">Give vague clues to blend in — you don't know the word!</div>
+        ${hintHTML}
       </div>
       <div class="order-card"><div class="order-title">Clue Order</div>${orderHTML}</div>
       <p class="cdwn">Starting in <strong id="cdwn-num">5</strong>s…</p>
