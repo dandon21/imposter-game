@@ -43,8 +43,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/hint-test', async (req, res) => {
   const word = req.query.word || 'pizza';
-  const hint = await getHintWord(word);
-  res.json({ word, hint, keySet: !!process.env.GROQ_API_KEY });
+  const key = process.env.GROQ_API_KEY;
+  let error = null;
+  let hint = null;
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({ model: 'llama3-8b-8192', messages: [{ role: 'user', content: `Say one word related to "${word}". Reply with ONLY that word.` }], max_tokens: 20 }),
+    });
+    const body = await r.text();
+    if (r.ok) hint = JSON.parse(body)?.choices?.[0]?.message?.content?.trim() || null;
+    else error = `HTTP ${r.status}: ${body.slice(0, 400)}`;
+  } catch (err) { error = err.message; }
+  res.json({ word, hint, keySet: !!key, error });
 });
 
 // ===== WORD LISTS =====
