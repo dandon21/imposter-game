@@ -19,9 +19,13 @@ async function getHintWord(word, context = null) {
           `You are running a social deduction party game. The secret word is ${wordDesc}.\n` +
           `Give the imposter ONE hint — a word or short phrase (max 3 words) that is in the same broad CATEGORY as ${wordDesc}, ` +
           `but NOT a synonym, body part, direct attribute, or obvious first-association of "${word}".\n` +
+          `NEVER give: other character names, show/movie/game titles, the word itself, or anything that directly names the source material.\n` +
+          `Instead give: thematic elements, settings, emotions, roles, or concepts associated with the category.\n` +
           `Target ~5/10 similarity: recognisably related to the same theme, but someone hearing only the hint could not immediately guess "${word}".\n` +
           `Bad hints for "elephant": trunk, tusk, large, mammoth, grey.\n` +
           `Good hints for "elephant": safari, wildlife reserve, savanna.\n` +
+          `Bad hints for "Levi (Attack on Titan character)": Eren, Mikasa, Attack on Titan, Survey Corps.\n` +
+          `Good hints for "Levi (Attack on Titan character)": underground city, soldier, titan hunter.\n` +
           `Reply with ONLY the hint word or phrase. No punctuation, no explanation.`
         }],
         max_tokens: 20,
