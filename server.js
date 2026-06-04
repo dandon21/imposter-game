@@ -5,9 +5,10 @@ const path = require('path');
 const os = require('os');
 
 // ===== HINT WORD =====
-async function getHintWord(word) {
+async function getHintWord(word, context = null) {
   const key = process.env.GROQ_API_KEY;
   if (!key) { console.warn('[hint] GROQ_API_KEY not set — skipping hint'); return null; }
+  const wordDesc = context ? `"${word}" (${context})` : `"${word}"`;
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -15,13 +16,16 @@ async function getHintWord(word) {
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content:
-          `You are helping run a social deduction party game. The secret word this round is "${word}". ` +
-          `Give the imposter player ONE hint word or very short phrase (max 3 words) that is thematically related to "${word}" but different enough that they don't know the exact answer. ` +
-          `The hint should help them give believable clues without giving the word away. ` +
-          `Reply with ONLY the hint word or phrase, nothing else, no punctuation.`
+          `You are running a social deduction party game. The secret word is ${wordDesc}.\n` +
+          `Give the imposter ONE hint — a word or short phrase (max 3 words) that is in the same broad CATEGORY as ${wordDesc}, ` +
+          `but NOT a synonym, body part, direct attribute, or obvious first-association of "${word}".\n` +
+          `Target ~5/10 similarity: recognisably related to the same theme, but someone hearing only the hint could not immediately guess "${word}".\n` +
+          `Bad hints for "elephant": trunk, tusk, large, mammoth, grey.\n` +
+          `Good hints for "elephant": safari, wildlife reserve, savanna.\n` +
+          `Reply with ONLY the hint word or phrase. No punctuation, no explanation.`
         }],
         max_tokens: 20,
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
     if (!res.ok) { console.warn(`[hint] Groq returned ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
@@ -113,7 +117,8 @@ async function startRound(room) {
   room.imposters = assignRoles(room);
   room.guessUsed = false;
 
-  const hintWord = await getHintWord(room.word);
+  const wordContext = room.customWordContexts?.[room.word.toLowerCase()] || null;
+  const hintWord = await getHintWord(room.word, wordContext);
 
   room.players.forEach(p => {
     const isImposter = room.imposters.includes(p.id);
@@ -189,7 +194,7 @@ io.on('connection', socket => {
 
     rooms[code] = {
       code, host: socket.id,
-      players: [], customWords: [],
+      players: [], customWords: [], customWordContexts: {},
       selectedCategories: Object.keys(DEFAULT_WORDS),
       state: 'lobby', word: null, lastWord: null,
       imposters: [], clues: [], votes: {},
@@ -222,7 +227,14 @@ io.on('connection', socket => {
   socket.on('update-settings', ({ customWords, selectedCategories, rounds }) => {
     const room = getRoom(socket.roomCode);
     if (!room || room.host !== socket.id || room.state !== 'lobby') return;
-    if (Array.isArray(customWords)) room.customWords = customWords.slice(0, 60).map(w => w.trim()).filter(Boolean);
+    if (Array.isArray(customWords)) {
+      const parsed = customWords.slice(0, 60).map(w => w.trim()).filter(Boolean).map(raw => {
+        const m = raw.match(/^(.+?)\s*\[(.+?)\]\s*$/);
+        return m ? { word: m[1].trim(), context: m[2].trim(), raw } : { word: raw, context: null, raw };
+      });
+      room.customWords = parsed.map(p => p.word);
+      room.customWordContexts = Object.fromEntries(parsed.filter(p => p.context).map(p => [p.word.toLowerCase(), p.context]));
+    }
     if (Array.isArray(selectedCategories)) room.selectedCategories = selectedCategories;
     if (typeof rounds === 'number') room.rounds = Math.max(1, Math.min(10, rounds));
     io.to(room.code).emit('settings-updated', { customWords: room.customWords, selectedCategories: room.selectedCategories, rounds: room.rounds });
