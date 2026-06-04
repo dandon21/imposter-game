@@ -401,11 +401,40 @@ io.on('connection', socket => {
     if (room.clueOrder[room.currentClueIndex] !== socket.id) return;
 
     const player = room.players.find(p => p.id === socket.id);
-    const entry = { playerId: socket.id, playerName: player.name, playerColor: player.color, clue: clue.trim().slice(0, 60) };
+    const trimmed = clue.trim().slice(0, 60);
+    const entry = { playerId: socket.id, playerName: player.name, playerColor: player.color, clue: trimmed };
     room.clues.push(entry);
     room.currentClueIndex++;
 
     io.to(room.code).emit('clue-submitted', { entry, index: room.currentClueIndex - 1 });
+
+    // Mid-clue win: imposter accidentally (or deliberately) says the secret word
+    if (room.imposters.includes(socket.id) && trimmed.toLowerCase() === room.word.toLowerCase()) {
+      if (player) player.score += 200;
+      room.state = 'gameover';
+      io.to(room.code).emit('imposter-self-revealed', {
+        imposterId: socket.id,
+        imposterName: player.name,
+        word: room.word,
+        players: sanitizePlayers(room.players),
+      });
+      setTimeout(() => {
+        const isLastRound = room.currentRound >= room.rounds;
+        if (isLastRound) {
+          io.to(room.code).emit('game-over', {
+            players: [...room.players].sort((a, b) => b.score - a.score)
+              .map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score })),
+            imposters: room.imposters,
+            imposterNames: room.players.filter(p => room.imposters.includes(p.id)).map(p => p.name),
+            word: room.word,
+          });
+        } else {
+          room.currentRound++;
+          startRound(room);
+        }
+      }, 3000);
+      return;
+    }
 
     if (room.currentClueIndex >= room.clueOrder.length) {
       room.state = 'voting';
